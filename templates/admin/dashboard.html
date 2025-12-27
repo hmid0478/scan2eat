@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - Scan2Eat{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 class="page-title">Dashboard</h1>
+            <p class="page-subtitle">Welcome back, {{ current_user.name }}! Here's what's happening today.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('scan_qr') }}" class="btn btn-primary btn-lg">
+                <i class="bi bi-qr-code-scan me-2"></i>Scan QR
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card stat-card-primary">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Total Students</span>
+                    <h3 class="stat-value" id="total-students">{{ total_students }}</h3>
+                </div>
+            </div>
+            <a href="{{ url_for('list_students') }}" class="stat-card-footer">
+                <span>View all students</span>
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card stat-card-success">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-cup-hot"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Meals Today</span>
+                    <h3 class="stat-value">{{ total_meals_today }}</h3>
+                </div>
+            </div>
+            <a href="{{ url_for('manage_meals') }}" class="stat-card-footer">
+                <span>Manage meals</span>
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card stat-card-info">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Today's Attendance</span>
+                    <h3 class="stat-value" id="today-attendance">{{ today_attendance }}</h3>
+                </div>
+            </div>
+            <a href="{{ url_for('reports') }}" class="stat-card-footer">
+                <span>View report</span>
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card stat-card-warning">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Today's Revenue</span>
+                    <h3 class="stat-value" id="today-revenue">Rs. {{ "%.2f"|format(today_revenue) }}</h3>
+                </div>
+            </div>
+            <a href="{{ url_for('reports') }}" class="stat-card-footer">
+                <span>Full report</span>
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-primary-subtle">
+                        <i class="bi bi-pie-chart text-primary"></i>
+                    </div>
+                    <h5 class="card-header-title">Meal Distribution</h5>
+                </div>
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <div style="height: 220px; width: 100%;" data-chart>
+                    <canvas id="mealAttendanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card h-100">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-success-subtle">
+                        <i class="bi bi-graph-up-arrow text-success"></i>
+                    </div>
+                    <h5 class="card-header-title">Weekly Revenue</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="height: 220px;" data-chart>
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions, Search and Recent Scans -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-warning-subtle">
+                        <i class="bi bi-lightning-charge text-warning"></i>
+                    </div>
+                    <h5 class="card-header-title">Quick Actions</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-3">
+                    <a href="{{ url_for('scan_qr') }}" class="quick-action-btn primary">
+                        <div class="quick-action-icon">
+                            <i class="bi bi-qr-code-scan"></i>
+                        </div>
+                        <div class="quick-action-text">
+                            <span class="quick-action-title">Scan QR Code</span>
+                            <span class="quick-action-desc">Process meal attendance</span>
+                        </div>
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                    <a href="{{ url_for('register_student') }}" class="quick-action-btn success">
+                        <div class="quick-action-icon">
+                            <i class="bi bi-person-plus"></i>
+                        </div>
+                        <div class="quick-action-text">
+                            <span class="quick-action-title">Register Student</span>
+                            <span class="quick-action-desc">Add new student</span>
+                        </div>
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                    <a href="{{ url_for('manage_meals') }}" class="quick-action-btn info">
+                        <div class="quick-action-icon">
+                            <i class="bi bi-cup-hot"></i>
+                        </div>
+                        <div class="quick-action-text">
+                            <span class="quick-action-title">Manage Meals</span>
+                            <span class="quick-action-desc">Add or edit meals</span>
+                        </div>
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                    <a href="{{ url_for('add_balance') }}" class="quick-action-btn warning">
+                        <div class="quick-action-icon">
+                            <i class="bi bi-plus-circle"></i>
+                        </div>
+                        <div class="quick-action-text">
+                            <span class="quick-action-title">Add Balance</span>
+                            <span class="quick-action-desc">Top up student wallet</span>
+                        </div>
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-secondary-subtle">
+                        <i class="bi bi-search text-secondary"></i>
+                    </div>
+                    <h5 class="card-header-title">Quick Search</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="search-input-wrapper">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="student-search" class="form-control form-control-lg" placeholder="Search students...">
+                </div>
+                <div id="student-results" class="mt-3">
+                    <div class="search-placeholder">
+                        <i class="bi bi-person-lines-fill"></i>
+                        <p>Search by name, roll number, or room</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-info-subtle">
+                        <i class="bi bi-clock-history text-info"></i>
+                    </div>
+                    <h5 class="card-header-title">Recent Scans</h5>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="recent-scans-list">
+                    {% if recent_attendance %}
+                        {% for attendance in recent_attendance %}
+                        <div class="recent-scan-item">
+                            <div class="scan-avatar">
+                                {{ attendance.user.name[0]|upper }}
+                            </div>
+                            <div class="scan-info">
+                                <span class="scan-name">{{ attendance.user.name }}</span>
+                                <span class="scan-meta">{{ attendance.meal.meal_type|capitalize }} &bull; {{ attendance.scanned_at.strftime('%I:%M %p') }}</span>
+                            </div>
+                            <div class="scan-amount">
+                                Rs. {{ "%.0f"|format(attendance.amount_paid) }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="bi bi-inbox"></i>
+                            <p>No recent scans</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Weekly Trend Chart -->
+<div class="row g-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-primary-subtle">
+                        <i class="bi bi-activity text-primary"></i>
+                    </div>
+                    <h5 class="card-header-title">Weekly Attendance Trend</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="height: 200px;" data-chart>
+                    <canvas id="weeklyTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        DashboardCharts.init();
+    });
+</script>
+{% endblock %}

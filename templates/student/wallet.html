@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block title %}My Wallet - Scan2Eat{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 class="page-title">My Wallet</h1>
+            <p class="page-subtitle">Track your balance and transaction history</p>
+        </div>
+        <a href="{{ url_for('student_refund_requests') }}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-counterclockwise me-2"></i>Request Refund
+        </a>
+    </div>
+</div>
+
+<!-- Balance Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="wallet-balance-card">
+            <div class="wallet-balance-icon">
+                <i class="bi bi-credit-card"></i>
+            </div>
+            <div class="wallet-balance-content">
+                <span class="wallet-balance-label">Current Balance</span>
+                <h2 class="wallet-balance-amount">Rs. {{ "%.2f"|format(current_user.wallet_balance) }}</h2>
+            </div>
+            <div class="wallet-balance-decoration"></div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card stat-card-success h-100">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-arrow-down-left"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Total Credits</span>
+                    <h3 class="stat-value text-success">Rs. {{ "%.0f"|format(transactions|selectattr('transaction_type', 'equalto', 'credit')|map(attribute='amount')|sum) }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card stat-card-warning h-100">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-arrow-up-right"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Total Spent</span>
+                    <h3 class="stat-value text-warning">Rs. {{ "%.0f"|format(transactions|selectattr('transaction_type', 'equalto', 'debit')|map(attribute='amount')|sum|abs) }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transaction History -->
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <div class="card-header-icon bg-primary-subtle">
+                    <i class="bi bi-clock-history text-primary"></i>
+                </div>
+                <h5 class="card-header-title">Transaction History</h5>
+            </div>
+            <span class="badge bg-primary">{{ transactions|length }} transactions</span>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        {% if transactions %}
+        <div class="wallet-transaction-list">
+            {% for tx in transactions %}
+            <div class="wallet-transaction-item">
+                <div class="transaction-icon {{ tx.transaction_type }}">
+                    <i class="bi bi-{{ 'arrow-down-left' if tx.transaction_type == 'credit' else 'arrow-up-right' }}"></i>
+                </div>
+                <div class="transaction-details">
+                    <div class="transaction-main">
+                        <span class="transaction-description">{{ tx.description }}</span>
+                        <span class="transaction-amount {{ tx.transaction_type }}">
+                            {{ '+' if tx.transaction_type == 'credit' else '-' }}Rs. {{ "%.2f"|format(tx.amount|abs) }}
+                        </span>
+                    </div>
+                    <div class="transaction-secondary">
+                        <span class="transaction-date">
+                            <i class="bi bi-calendar3 me-1"></i>{{ tx.created_at.strftime('%d %b %Y, %I:%M %p') }}
+                        </span>
+                        <span class="transaction-balance">
+                            Balance: Rs. {{ "%.2f"|format(tx.balance_after) }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <p>No transactions yet</p>
+            <span class="text-muted">Your transaction history will appear here</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Info Card -->
+<div class="info-card mt-4">
+    <div class="info-card-icon">
+        <i class="bi bi-info-circle"></i>
+    </div>
+    <div class="info-card-content">
+        <h6>Need to add balance?</h6>
+        <p>Please contact the mess administrator to top up your wallet balance. You can also request a refund for any unused balance.</p>
+    </div>
+</div>
+{% endblock %}

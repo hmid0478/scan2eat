@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Meals - Scan2Eat{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 class="page-title">Manage Meals</h1>
+            <p class="page-subtitle">Add and manage daily meal schedules</p>
+        </div>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Add Meal Form -->
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-info-subtle">
+                        <i class="bi bi-plus-circle text-info"></i>
+                    </div>
+                    <h5 class="card-header-title">Add New Meal</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('manage_meals') }}">
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Date</label>
+                        <div class="input-icon-wrapper">
+                            <i class="bi bi-calendar3"></i>
+                            <input type="date" class="form-control" id="date" name="date" value="{{ today }}" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="meal_type" class="form-label">Meal Type</label>
+                        <select class="form-select" id="meal_type" name="meal_type" required>
+                            <option value="breakfast">Breakfast</option>
+                            <option value="lunch">Lunch</option>
+                            <option value="dinner">Dinner</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="price" class="form-label">Price</label>
+                        <div class="input-group">
+                            <span class="input-group-text">Rs.</span>
+                            <input type="number" class="form-control" id="price" name="price" required min="1" step="0.01" placeholder="Enter meal price">
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label for="menu_items" class="form-label">Menu Items</label>
+                        <textarea class="form-control" id="menu_items" name="menu_items" rows="4" placeholder="Enter food items (one per line)&#10;e.g.:&#10;Rice&#10;Dal&#10;Roti"></textarea>
+                        <div class="form-text">Enter each food item on a new line</div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-plus-circle me-2"></i>Add Meal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Meals -->
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="card-header-icon bg-warning-subtle">
+                            <i class="bi bi-cup-hot text-warning"></i>
+                        </div>
+                        <h5 class="card-header-title">Recent Meals</h5>
+                    </div>
+                    {% if meals %}
+                    <span class="badge bg-primary">{{ meals|length }} meals</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if meals %}
+                <div class="admin-meals-list">
+                    {% for meal in meals %}
+                    <div class="admin-meal-item">
+                        <div class="admin-meal-icon {{ meal.meal_type }}">
+                            <i class="bi bi-{{ 'sunrise' if meal.meal_type == 'breakfast' else 'sun' if meal.meal_type == 'lunch' else 'moon-stars' }}"></i>
+                        </div>
+                        <div class="admin-meal-details">
+                            <div class="admin-meal-main">
+                                <div class="admin-meal-info">
+                                    <span class="admin-meal-type">{{ meal.meal_type|capitalize }}</span>
+                                    <span class="admin-meal-date">{{ meal.date.strftime('%A, %d %b %Y') }}</span>
+                                </div>
+                                <div class="admin-meal-price">
+                                    Rs. {{ "%.0f"|format(meal.price) }}
+                                </div>
+                            </div>
+                            {% if meal.menu_items %}
+                            <div class="admin-meal-menu">
+                                <i class="bi bi-card-list me-1"></i>
+                                {{ meal.menu_items[:60] }}{{ '...' if meal.menu_items|length > 60 else '' }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="admin-meal-status">
+                            {% if meal.is_active %}
+                            <span class="status-pill active">Active</span>
+                            {% else %}
+                            <span class="status-pill inactive">Inactive</span>
+                            {% endif %}
+                        </div>
+                        <div class="admin-meal-actions">
+                            <a href="{{ url_for('edit_meal', meal_id=meal.id) }}" class="btn btn-sm btn-outline-primary" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteMeal({{ meal.id }})" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-cup-hot"></i>
+                    <p>No meals added yet</p>
+                    <span class="text-muted">Add your first meal using the form</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Initialize Bootstrap popovers
+document.addEventListener('DOMContentLoaded', function() {
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    popoverTriggerList.map(function (popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl);
+    });
+});
+
+async function deleteMeal(mealId) {
+    if (!confirm('Are you sure you want to delete this meal?\n\nNote: Meals with attendance records cannot be deleted.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/meals/${mealId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            Toast.show(data.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            Toast.show(data.message, 'error');
+        }
+    } catch (error) {
+        Toast.show('Failed to delete meal', 'error');
+    }
+}
+</script>
+{% endblock %}

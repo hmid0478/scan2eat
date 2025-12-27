@@ -1,0 +1,514 @@
+{% extends 'base.html' %}
+
+{% block title %}Scan QR Code - Scan2Eat{% endblock %}
+
+{% block extra_css %}
+<style>
+    #qr-reader {
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        background: var(--gray-900);
+    }
+    #qr-reader video {
+        width: 100% !important;
+        border-radius: var(--radius-lg);
+    }
+    #debug-log {
+        font-family: monospace;
+        font-size: 12px;
+        max-height: 150px;
+        overflow-y: auto;
+        background: var(--gray-50);
+        padding: 10px;
+        border-radius: var(--radius);
+    }
+    #camera-select {
+        display: none;
+    }
+    #camera-select.show {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 class="page-title">Scan QR Code</h1>
+            <p class="page-subtitle">Process student meal attendance</p>
+        </div>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Scanner Section -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-primary-subtle">
+                        <i class="bi bi-qr-code-scan text-primary"></i>
+                    </div>
+                    <h5 class="card-header-title">QR Scanner</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Meal Selection -->
+                <div class="mb-4">
+                    <label for="meal_select" class="form-label"><strong>Step 1: Select Meal</strong></label>
+                    <select class="form-select form-select-lg" id="meal_select" required>
+                        <option value="">-- Select Today's Meal --</option>
+                        {% for meal in meals %}
+                        <option value="{{ meal.id }}" data-price="{{ meal.price }}">
+                            {{ meal.meal_type|capitalize }} - Rs. {{ "%.0f"|format(meal.price) }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if not meals %}
+                    <div class="alert alert-warning mt-3 mb-0">
+                        <i class="bi bi-exclamation-triangle me-2"></i>No meals configured for today.
+                        <a href="{{ url_for('manage_meals') }}" class="alert-link">Add a meal first.</a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Camera Selection -->
+                <div class="mb-3" id="camera-select">
+                    <label for="camera_list" class="form-label"><strong>Select Camera</strong></label>
+                    <select class="form-select" id="camera_list"></select>
+                </div>
+
+                <!-- QR Scanner Container -->
+                <div id="qr-reader" class="mb-3"></div>
+
+                <!-- Scanner Status -->
+                <div id="scanner-status" class="alert alert-info mb-3">
+                    <i class="bi bi-info-circle me-2"></i>Click "Start Camera" to begin scanning
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="d-grid gap-2">
+                    <button id="start-btn" class="btn btn-success btn-lg" {% if not meals %}disabled{% endif %}>
+                        <i class="bi bi-camera me-2"></i>Start Camera
+                    </button>
+                    <button id="stop-btn" class="btn btn-danger btn-lg" style="display: none;">
+                        <i class="bi bi-stop-circle me-2"></i>Stop Camera
+                    </button>
+                </div>
+
+                <!-- Manual Entry -->
+                <div class="mt-4">
+                    <button class="btn btn-outline-secondary w-100" type="button" data-bs-toggle="collapse" data-bs-target="#manualEntry">
+                        <i class="bi bi-keyboard me-2"></i>Manual Entry (if camera doesn't work)
+                    </button>
+                    <div class="collapse mt-3" id="manualEntry">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="manual-roll" placeholder="Enter Roll Number (e.g., 2024-CS-001)">
+                            <button class="btn btn-primary" type="button" id="manual-submit">
+                                Submit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Debug Log (collapsible) -->
+                <div class="mt-3">
+                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#debugSection">
+                        <i class="bi bi-bug me-2"></i>Debug Log
+                    </button>
+                    <div class="collapse mt-2" id="debugSection">
+                        <div id="debug-log"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-success-subtle">
+                        <i class="bi bi-check2-circle text-success"></i>
+                    </div>
+                    <h5 class="card-header-title">Scan Result</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="scan-result" class="scan-result p-4 border rounded text-center">
+                    <i class="bi bi-qr-code fs-1 text-muted"></i>
+                    <p class="text-muted mt-2 mb-0">Scan a QR code to see results here</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-info-subtle">
+                        <i class="bi bi-clock-history text-info"></i>
+                    </div>
+                    <h5 class="card-header-title">Recent Scans</h5>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div id="history-list" class="scan-history-list">
+                    <div class="empty-state py-4">
+                        <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                        <p class="mb-0">No scans yet in this session</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+(function() {
+    // Elements
+    const startBtn = document.getElementById('start-btn');
+    const stopBtn = document.getElementById('stop-btn');
+    const mealSelect = document.getElementById('meal_select');
+    const scanResult = document.getElementById('scan-result');
+    const historyList = document.getElementById('history-list');
+    const manualRollInput = document.getElementById('manual-roll');
+    const manualSubmitBtn = document.getElementById('manual-submit');
+    const cameraSelect = document.getElementById('camera-select');
+    const cameraList = document.getElementById('camera_list');
+    const scannerStatus = document.getElementById('scanner-status');
+    const debugLog = document.getElementById('debug-log');
+
+    let html5QrCode = null;
+    let isScanning = false;
+    let lastScannedCode = '';
+    let lastScanTime = 0;
+
+    // Debug logging
+    function log(message, type = 'info') {
+        const time = new Date().toLocaleTimeString();
+        const color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'black';
+        debugLog.innerHTML += `<div style="color:${color}">[${time}] ${message}</div>`;
+        debugLog.scrollTop = debugLog.scrollHeight;
+        console.log(`[${type}] ${message}`);
+    }
+
+    function updateStatus(message, type = 'info') {
+        const bgClass = type === 'error' ? 'alert-danger' : type === 'success' ? 'alert-success' : 'alert-info';
+        scannerStatus.className = `alert ${bgClass} mb-3`;
+        scannerStatus.innerHTML = `<i class="bi bi-${type === 'error' ? 'x-circle' : type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>${message}`;
+    }
+
+    // Initialize
+    log('QR Scanner initialized');
+
+    // Check if html5QrCode is available
+    if (typeof Html5Qrcode === 'undefined') {
+        log('ERROR: Html5Qrcode library not loaded!', 'error');
+        updateStatus('QR Scanner library failed to load. Please refresh the page.', 'error');
+    } else {
+        log('Html5Qrcode library loaded successfully', 'success');
+    }
+
+    // Get available cameras
+    async function getCameras() {
+        try {
+            const devices = await Html5Qrcode.getCameras();
+            log(`Found ${devices.length} camera(s)`, 'success');
+
+            if (devices.length > 0) {
+                cameraList.innerHTML = '';
+                devices.forEach((device, index) => {
+                    const option = document.createElement('option');
+                    option.value = device.id;
+                    option.text = device.label || `Camera ${index + 1}`;
+                    cameraList.appendChild(option);
+                    log(`Camera: ${device.label || device.id}`);
+                });
+
+                // Select back camera by default if available
+                for (let device of devices) {
+                    if (device.label.toLowerCase().includes('back') ||
+                        device.label.toLowerCase().includes('rear') ||
+                        device.label.toLowerCase().includes('environment')) {
+                        cameraList.value = device.id;
+                        break;
+                    }
+                }
+
+                cameraSelect.classList.add('show');
+                return devices;
+            } else {
+                log('No cameras found', 'error');
+                updateStatus('No cameras found on this device.', 'error');
+                return [];
+            }
+        } catch (err) {
+            log(`Error getting cameras: ${err.message}`, 'error');
+            updateStatus(`Camera access error: ${err.message}`, 'error');
+            return [];
+        }
+    }
+
+    // Start scanning
+    startBtn.addEventListener('click', async function() {
+        if (!mealSelect.value) {
+            alert('Please select a meal first!');
+            return;
+        }
+
+        log('Starting camera...');
+        updateStatus('Starting camera...', 'info');
+
+        try {
+            // Get cameras first
+            const cameras = await getCameras();
+            if (cameras.length === 0) {
+                return;
+            }
+
+            // Create scanner instance
+            html5QrCode = new Html5Qrcode("qr-reader");
+            log('Scanner instance created');
+
+            const selectedCameraId = cameraList.value;
+            log(`Using camera: ${selectedCameraId}`);
+
+            const config = {
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0,
+                disableFlip: false
+            };
+
+            await html5QrCode.start(
+                selectedCameraId,
+                config,
+                onScanSuccess,
+                onScanError
+            );
+
+            isScanning = true;
+            startBtn.style.display = 'none';
+            stopBtn.style.display = 'block';
+            log('Camera started successfully', 'success');
+            updateStatus('Camera active - Point at QR code', 'success');
+
+        } catch (err) {
+            log(`Error starting camera: ${err.message}`, 'error');
+            updateStatus(`Failed to start camera: ${err.message}`, 'error');
+
+            // Show helpful message
+            let helpMsg = 'Camera access failed. ';
+            if (err.message.includes('Permission')) {
+                helpMsg += 'Please allow camera access in your browser settings.';
+            } else if (err.message.includes('NotFound')) {
+                helpMsg += 'No camera found on this device.';
+            } else if (err.message.includes('NotAllowed')) {
+                helpMsg += 'Camera access was denied. Please check permissions.';
+            } else if (err.message.includes('Secure')) {
+                helpMsg += 'Camera requires HTTPS. Use localhost or enable HTTPS.';
+            } else {
+                helpMsg += 'Try using Manual Entry instead.';
+            }
+            alert(helpMsg);
+        }
+    });
+
+    // Stop scanning
+    stopBtn.addEventListener('click', async function() {
+        log('Stopping camera...');
+        if (html5QrCode && isScanning) {
+            try {
+                await html5QrCode.stop();
+                log('Camera stopped', 'success');
+            } catch (err) {
+                log(`Error stopping: ${err.message}`, 'error');
+            }
+            try {
+                html5QrCode.clear();
+            } catch (e) {}
+        }
+        isScanning = false;
+        startBtn.style.display = 'block';
+        stopBtn.style.display = 'none';
+        updateStatus('Camera stopped. Click "Start Camera" to scan again.', 'info');
+    });
+
+    // On successful scan
+    function onScanSuccess(decodedText, decodedResult) {
+        const now = Date.now();
+        log(`QR Detected: ${decodedText}`, 'success');
+
+        // Prevent duplicate scans within 3 seconds
+        if (decodedText !== lastScannedCode || (now - lastScanTime) > 3000) {
+            lastScannedCode = decodedText;
+            lastScanTime = now;
+            processQRCode(decodedText);
+        } else {
+            log('Duplicate scan ignored (within 3 seconds)');
+        }
+    }
+
+    // On scan error (called when no QR in view - normal)
+    function onScanError(errorMessage) {
+        // Don't log every frame error - too noisy
+    }
+
+    // Manual submission
+    manualSubmitBtn.addEventListener('click', function() {
+        const rollNumber = manualRollInput.value.trim();
+        if (rollNumber) {
+            log(`Manual entry: ${rollNumber}`);
+            processQRCode(rollNumber);
+            manualRollInput.value = '';
+        } else {
+            alert('Please enter a roll number');
+        }
+    });
+
+    manualRollInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            manualSubmitBtn.click();
+        }
+    });
+
+    // Process the scanned/entered roll number
+    async function processQRCode(rollNumber) {
+        const mealId = mealSelect.value;
+
+        if (!mealId) {
+            showResult(false, `
+                <i class="bi bi-exclamation-triangle-fill fs-1 text-warning"></i>
+                <h4 class="mt-2 text-warning">No Meal Selected</h4>
+                <p class="mb-0">Please select a meal first.</p>
+            `);
+            return;
+        }
+
+        log(`Processing: ${rollNumber} for meal ${mealId}`);
+
+        // Show loading
+        scanResult.innerHTML = `
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 mb-0">Processing ${rollNumber}...</p>
+        `;
+        scanResult.className = 'scan-result p-4 border rounded text-center';
+
+        try {
+            const response = await fetch('/admin/process-scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    roll_number: rollNumber,
+                    meal_id: parseInt(mealId)
+                })
+            });
+
+            const data = await response.json();
+            log(`Response: ${JSON.stringify(data)}`);
+
+            if (data.success) {
+                showResult(true, `
+                    <i class="bi bi-check-circle-fill fs-1 text-success"></i>
+                    <h4 class="mt-2 text-success">Success!</h4>
+                    <p class="mb-1"><strong>${data.student_name}</strong></p>
+                    <p class="mb-1">${data.meal_type.charAt(0).toUpperCase() + data.meal_type.slice(1)}</p>
+                    <p class="mb-1">Amount: Rs. ${data.amount}</p>
+                    <p class="mb-0 small text-muted">New Balance: Rs. ${data.new_balance.toFixed(2)}</p>
+                `);
+                addToHistory(data.student_name, data.meal_type, true, data.amount);
+                playSound(true);
+                log('Scan successful', 'success');
+            } else {
+                showResult(false, `
+                    <i class="bi bi-x-circle-fill fs-1 text-danger"></i>
+                    <h4 class="mt-2 text-danger">Failed</h4>
+                    <p class="mb-0">${data.message}</p>
+                `);
+                addToHistory(rollNumber, data.message, false, 0);
+                playSound(false);
+                log(`Scan failed: ${data.message}`, 'error');
+            }
+        } catch (err) {
+            log(`Network error: ${err.message}`, 'error');
+            showResult(false, `
+                <i class="bi bi-wifi-off fs-1 text-danger"></i>
+                <h4 class="mt-2 text-danger">Network Error</h4>
+                <p class="mb-0">Could not connect to server. Please check your connection.</p>
+            `);
+        }
+    }
+
+    function showResult(success, html) {
+        scanResult.innerHTML = html;
+        scanResult.className = 'scan-result p-4 border rounded text-center ' + (success ? 'success' : 'error');
+
+        setTimeout(() => {
+            scanResult.classList.remove('success', 'error');
+        }, 5000);
+    }
+
+    function addToHistory(name, detail, success, amount) {
+        const firstChild = historyList.firstElementChild;
+        if (firstChild && firstChild.classList.contains('empty-state')) {
+            historyList.innerHTML = '';
+        }
+
+        const time = new Date().toLocaleTimeString();
+        const item = document.createElement('div');
+        item.className = `scan-history-item ${success ? 'success' : 'error'}`;
+        item.innerHTML = `
+            <div class="scan-history-icon ${success ? 'success' : 'error'}">
+                <i class="bi bi-${success ? 'check-circle' : 'x-circle'}"></i>
+            </div>
+            <div class="scan-history-details">
+                <div class="scan-history-name">${name}</div>
+                <div class="scan-history-meta">${detail}</div>
+            </div>
+            ${success ? `<div class="scan-history-amount">Rs. ${amount}</div>` : ''}
+            <div class="scan-history-time">${time}</div>
+        `;
+        historyList.insertBefore(item, historyList.firstChild);
+
+        while (historyList.children.length > 10) {
+            historyList.removeChild(historyList.lastChild);
+        }
+    }
+
+    function playSound(success) {
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.frequency.value = success ? 800 : 300;
+            oscillator.type = 'sine';
+            gainNode.gain.value = 0.3;
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.2);
+        } catch (e) {}
+    }
+
+    // Cleanup
+    window.addEventListener('beforeunload', async () => {
+        if (html5QrCode && isScanning) {
+            try { await html5QrCode.stop(); } catch (e) {}
+        }
+    });
+
+})();
+</script>
+{% endblock %}

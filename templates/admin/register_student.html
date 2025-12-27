@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+
+{% block title %}Register Student - Scan2Eat{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 class="page-title">Register New Student</h1>
+            <p class="page-subtitle">Add a new student to the system</p>
+        </div>
+        <a href="{{ url_for('list_students') }}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left me-2"></i>Back to Students
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-success-subtle">
+                        <i class="bi bi-person-plus text-success"></i>
+                    </div>
+                    <h5 class="card-header-title">Student Information</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('register_student') }}" class="needs-validation" novalidate id="registerForm">
+                    <div class="mb-4">
+                        <label for="name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                        <div class="input-icon-wrapper">
+                            <i class="bi bi-person"></i>
+                            <input type="text" class="form-control" id="name" name="name" required minlength="2" placeholder="Enter full name">
+                        </div>
+                        <div class="invalid-feedback">Please enter a valid name (at least 2 characters)</div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="roll_number" class="form-label">Roll Number <span class="text-danger">*</span></label>
+                            <div class="input-icon-wrapper">
+                                <i class="bi bi-hash"></i>
+                                <input type="text" class="form-control" id="roll_number" name="roll_number" required
+                                       placeholder="e.g., 2024-CS-562"
+                                       pattern="^\d{4}-[A-Za-z]{2,5}-\d{1,4}$"
+                                       style="text-transform: uppercase;">
+                            </div>
+                            <div class="form-text">Format: YYYY-DEPT-XXX (e.g., 2024-CS-562)</div>
+                            <div id="roll-feedback" class="small mt-1"></div>
+                            <div class="invalid-feedback">Enter valid format: YYYY-DEPT-XXX</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="room_number" class="form-label">Room Number <span class="text-danger">*</span></label>
+                            <div class="input-icon-wrapper">
+                                <i class="bi bi-door-open"></i>
+                                <input type="text" class="form-control" id="room_number" name="room_number" required placeholder="e.g., A-101">
+                            </div>
+                            <div class="invalid-feedback">Please enter a room number</div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                <input type="password" class="form-control" id="password" name="password" required minlength="4" placeholder="Enter password">
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                    <i class="bi bi-eye" id="toggleIcon"></i>
+                                </button>
+                            </div>
+                            <div class="progress mt-2" style="height: 4px; border-radius: 2px;">
+                                <div class="progress-bar" role="progressbar" id="password-strength" style="width: 0%"></div>
+                            </div>
+                            <div class="invalid-feedback">Password must be at least 4 characters</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="initial_balance" class="form-label">Initial Wallet Balance</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Rs.</span>
+                                <input type="number" class="form-control" id="initial_balance" name="initial_balance" value="0" min="0" step="0.01" placeholder="0.00">
+                            </div>
+                            <div class="form-text">Optional: Add initial balance</div>
+                        </div>
+                    </div>
+
+                    <!-- Preview Section -->
+                    <div class="preview-card mb-4" id="preview-card" style="display: none;">
+                        <div class="preview-header">
+                            <i class="bi bi-eye"></i>
+                            <span>Preview</span>
+                        </div>
+                        <div class="preview-body">
+                            <div class="row">
+                                <div class="col-6 col-md-3">
+                                    <span class="preview-label">Name</span>
+                                    <span class="preview-value" id="preview-name">-</span>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <span class="preview-label">Roll Number</span>
+                                    <span class="preview-value" id="preview-roll">-</span>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <span class="preview-label">Room</span>
+                                    <span class="preview-value" id="preview-room">-</span>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <span class="preview-label">Balance</span>
+                                    <span class="preview-value" id="preview-balance">Rs. 0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg" id="submitBtn">
+                            <i class="bi bi-person-plus me-2"></i>Register Student
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('registerForm');
+    const previewCard = document.getElementById('preview-card');
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    const toggleIcon = document.getElementById('toggleIcon');
+
+    // Roll number field
+    const rollInput = document.getElementById('roll_number');
+    const rollFeedback = document.getElementById('roll-feedback');
+    const rollPattern = /^\d{4}-[A-Za-z]{2,5}-\d{1,4}$/;
+
+    // Toggle password visibility
+    togglePassword.addEventListener('click', function() {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        toggleIcon.classList.toggle('bi-eye');
+        toggleIcon.classList.toggle('bi-eye-slash');
+    });
+
+    // Auto-uppercase and format roll number
+    rollInput.addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+        validateRollNumber();
+    });
+
+    // Validate roll number format
+    function validateRollNumber() {
+        const value = rollInput.value.trim();
+
+        if (!value) {
+            rollFeedback.innerHTML = '';
+            rollInput.classList.remove('is-valid', 'is-invalid');
+            return false;
+        }
+
+        if (rollPattern.test(value)) {
+            rollInput.classList.remove('is-invalid');
+            rollInput.classList.add('is-valid');
+            checkRollNumberExists(value);
+            return true;
+        } else {
+            rollInput.classList.remove('is-valid');
+            rollInput.classList.add('is-invalid');
+            rollFeedback.innerHTML = '<span class="text-danger"><i class="bi bi-info-circle me-1"></i>Format: YYYY-DEPT-XXX</span>';
+            return false;
+        }
+    }
+
+    // Check if roll number exists (debounced)
+    let checkTimeout;
+    async function checkRollNumberExists(rollNumber) {
+        clearTimeout(checkTimeout);
+        checkTimeout = setTimeout(async () => {
+            try {
+                const response = await fetch(`/api/check-roll-number?roll=${encodeURIComponent(rollNumber)}`);
+                const data = await response.json();
+
+                if (data.exists) {
+                    rollFeedback.innerHTML = '<i class="bi bi-x-circle text-danger me-1"></i><span class="text-danger">Roll number already registered</span>';
+                    rollInput.classList.add('is-invalid');
+                    rollInput.classList.remove('is-valid');
+                } else {
+                    rollFeedback.innerHTML = '<i class="bi bi-check-circle text-success me-1"></i><span class="text-success">Roll number available</span>';
+                    rollInput.classList.remove('is-invalid');
+                    rollInput.classList.add('is-valid');
+                }
+            } catch (error) {
+                console.error('Error checking roll number:', error);
+            }
+        }, 500);
+    }
+
+    // Live preview
+    const nameInput = document.getElementById('name');
+    const roomInput = document.getElementById('room_number');
+    const balanceInput = document.getElementById('initial_balance');
+
+    function updatePreview() {
+        const hasValue = nameInput.value || rollInput.value || roomInput.value;
+        previewCard.style.display = hasValue ? 'block' : 'none';
+
+        document.getElementById('preview-name').textContent = nameInput.value || '-';
+        document.getElementById('preview-roll').textContent = rollInput.value || '-';
+        document.getElementById('preview-room').textContent = roomInput.value || '-';
+        document.getElementById('preview-balance').textContent = 'Rs. ' + parseFloat(balanceInput.value || 0).toFixed(2);
+    }
+
+    nameInput.addEventListener('input', updatePreview);
+    rollInput.addEventListener('input', updatePreview);
+    roomInput.addEventListener('input', updatePreview);
+    balanceInput.addEventListener('input', updatePreview);
+
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        if (!validateRollNumber()) {
+            e.preventDefault();
+            e.stopPropagation();
+            Toast.show('Please enter a valid roll number (Format: YYYY-DEPT-XXX)', 'error');
+            return;
+        }
+
+        if (!form.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+            Toast.show('Please fill in all required fields correctly', 'error');
+        }
+        form.classList.add('was-validated');
+    });
+
+    // Real-time validation feedback
+    const inputs = form.querySelectorAll('input[required]');
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.value) {
+                this.classList.add('was-validated');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

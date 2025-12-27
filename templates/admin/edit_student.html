@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Student - Scan2Eat{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 class="page-title">Edit Student</h1>
+            <p class="page-subtitle">Update student information</p>
+        </div>
+        <a href="{{ url_for('list_students') }}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left me-2"></i>Back to Students
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Edit Form -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-primary-subtle">
+                        <i class="bi bi-pencil-square text-primary"></i>
+                    </div>
+                    <h5 class="card-header-title">Student Details</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('edit_student', student_id=student.id) }}" class="needs-validation" novalidate>
+                    <div class="mb-4">
+                        <label for="name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                        <div class="input-icon-wrapper">
+                            <i class="bi bi-person"></i>
+                            <input type="text" class="form-control" id="name" name="name" required minlength="2" value="{{ student.name }}">
+                        </div>
+                        <div class="invalid-feedback">Please enter a valid name (at least 2 characters)</div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="roll_number" class="form-label">Roll Number</label>
+                            <div class="input-icon-wrapper">
+                                <i class="bi bi-hash"></i>
+                                <input type="text" class="form-control" id="roll_number" value="{{ student.username }}" disabled>
+                            </div>
+                            <div class="form-text text-muted">Roll number cannot be changed</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="room_number" class="form-label">Room Number <span class="text-danger">*</span></label>
+                            <div class="input-icon-wrapper">
+                                <i class="bi bi-door-open"></i>
+                                <input type="text" class="form-control" id="room_number" name="room_number" required value="{{ student.room_number }}">
+                            </div>
+                            <div class="invalid-feedback">Please enter a room number</div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="password" class="form-label">New Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                <input type="password" class="form-control" id="password" name="password" minlength="4" placeholder="Leave blank to keep current">
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                    <i class="bi bi-eye" id="toggleIcon"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">Leave blank to keep current password</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Wallet Balance</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-wallet2"></i></span>
+                                <span class="form-control bg-light">Rs. {{ "%.2f"|format(student.wallet_balance) }}</span>
+                                <a href="{{ url_for('add_balance') }}" class="btn btn-outline-success">
+                                    <i class="bi bi-plus-circle"></i>
+                                </a>
+                            </div>
+                            <div class="form-text text-muted">Use Wallet page to add balance</div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle me-2"></i>Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Info Sidebar -->
+    <div class="col-lg-4">
+        <!-- QR Code Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-info-subtle">
+                        <i class="bi bi-qr-code text-info"></i>
+                    </div>
+                    <h5 class="card-header-title">QR Code</h5>
+                </div>
+            </div>
+            <div class="card-body text-center">
+                {% if student.qr_code_path %}
+                <img src="{{ url_for('static', filename=student.qr_code_path) }}" alt="QR Code" class="img-fluid mb-3" style="max-width: 200px; border-radius: var(--radius-lg); border: 2px solid var(--gray-200);">
+                <div>
+                    <a href="{{ url_for('static', filename=student.qr_code_path) }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-arrows-fullscreen me-1"></i>View Full Size
+                    </a>
+                </div>
+                {% else %}
+                <div class="text-muted py-4">
+                    <i class="bi bi-exclamation-triangle fs-1"></i>
+                    <p class="mb-0 mt-2">QR code not generated</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Student Info Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-secondary-subtle">
+                        <i class="bi bi-info-circle text-secondary"></i>
+                    </div>
+                    <h5 class="card-header-title">Account Info</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="info-item">
+                    <span class="info-label">Status</span>
+                    <span class="status-pill {{ 'active' if student.is_active else 'inactive' }}">
+                        <i class="bi bi-{{ 'check-circle' if student.is_active else 'pause-circle' }} me-1"></i>
+                        {{ 'Active' if student.is_active else 'Inactive' }}
+                    </span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Registered On</span>
+                    <span class="info-value">{{ student.created_at.strftime('%d %b %Y, %I:%M %p') }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Student ID</span>
+                    <span class="info-value">#{{ student.id }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    const toggleIcon = document.getElementById('toggleIcon');
+
+    togglePassword.addEventListener('click', function() {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        toggleIcon.classList.toggle('bi-eye');
+        toggleIcon.classList.toggle('bi-eye-slash');
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan2Eat - Cashless Mess Management System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --accent: #a855f7;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow-x: hidden;
+            color: var(--gray-700);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: transparent !important;
+            padding: 1.25rem 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .navbar.scrolled {
+            background: rgba(255, 255, 255, 0.98) !important;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
+            padding: 0.75rem 0;
+            backdrop-filter: blur(10px);
+        }
+
+        @media (max-width: 991px) {
+            .navbar {
+                background: transparent !important;
+            }
+
+            .navbar.scrolled {
+                background: rgba(255, 255, 255, 0.98) !important;
+            }
+
+            .navbar .container {
+                position: relative;
+            }
+
+            .navbar-collapse {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: white;
+                padding: 1rem;
+                border-radius: 16px;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+                margin: 0.5rem 1rem;
+                z-index: 1001;
+            }
+
+            .navbar-collapse .navbar-nav {
+                gap: 0 !important;
+            }
+
+            .navbar-collapse .nav-link {
+                color: var(--gray-700) !important;
+                padding: 0.875rem 1rem !important;
+                border-radius: 10px;
+                margin-bottom: 0.25rem;
+            }
+
+            .navbar-collapse .nav-link:hover {
+                background: var(--gray-100);
+            }
+
+            .navbar-collapse .nav-item.ms-lg-2 {
+                margin-left: 0 !important;
+                margin-top: 0.5rem;
+            }
+
+            .navbar-collapse .btn-nav {
+                width: 100%;
+                display: flex;
+                justify-content: center;
+                background: linear-gradient(135deg, var(--primary), var(--secondary));
+                color: white !important;
+            }
+        }
+
+        .navbar-brand {
+            font-weight: 800;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .navbar-brand .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .navbar.scrolled .brand-icon {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .navbar.scrolled .nav-link,
+        .navbar.scrolled .navbar-brand {
+            color: var(--gray-800) !important;
+        }
+
+        .navbar-toggler {
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .navbar-toggler:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .navbar.scrolled .navbar-toggler {
+            background: var(--gray-100);
+        }
+
+        .navbar.scrolled .navbar-toggler:hover {
+            background: var(--gray-200);
+        }
+
+        .navbar-toggler .menu-icon {
+            font-size: 1.5rem;
+            color: white;
+            line-height: 1;
+        }
+
+        .navbar.scrolled .navbar-toggler .menu-icon {
+            color: var(--gray-700);
+        }
+
+        .nav-link {
+            font-weight: 500;
+            padding: 0.5rem 1rem !important;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            opacity: 0.8;
+        }
+
+        .btn-nav {
+            background: white;
+            color: var(--primary) !important;
+            padding: 0.625rem 1.5rem !important;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-nav:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .navbar.scrolled .btn-nav {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white !important;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            padding: 120px 0 80px;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 15s infinite;
+        }
+
+        .floating-shape {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .floating-shape:nth-child(1) {
+            width: 400px;
+            height: 400px;
+            top: -150px;
+            right: -100px;
+            animation-delay: 0s;
+        }
+
+        .floating-shape:nth-child(2) {
+            width: 300px;
+            height: 300px;
+            bottom: 5%;
+            left: -100px;
+            animation-delay: -7s;
+        }
+
+        .floating-shape:nth-child(3) {
+            width: 200px;
+            height: 200px;
+            top: 40%;
+            right: 5%;
+            animation-delay: -14s;
+        }
+
+        .floating-shape:nth-child(4) {
+            width: 150px;
+            height: 150px;
+            bottom: 20%;
+            left: 15%;
+            animation-delay: -3s;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.5); opacity: 0.3; }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-30px) rotate(5deg); }
+            50% { transform: translateY(0) rotate(0deg); }
+            75% { transform: translateY(30px) rotate(-5deg); }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .hero-badge i {
+            font-size: 1rem;
+        }
+
+        .hero-title {
+            font-size: 3.75rem;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -1px;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            line-height: 1.7;
+            max-width: 500px;
+        }
+
+        .hero-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn-hero-primary {
+            background: white;
+            color: var(--primary);
+            padding: 1rem 2rem;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-hero-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+            color: var(--primary-dark);
+        }
+
+        .btn-hero-secondary {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-hero-secondary:hover {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 2.5rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .hero-stat h3 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 0.25rem;
+        }
+
+        .hero-stat span {
+            font-size: 0.875rem;
+            opacity: 0.8;
+        }
+
+        .hero-image {
+            position: relative;
+            z-index: 1;
+        }
+
+        .floating-card {
+            background: white;
+            border-radius: 24px;
+            padding: 28px;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
+            animation: cardFloat 6s ease-in-out infinite;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        @keyframes cardFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(1deg); }
+        }
+
+        .card-status {
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+            padding-bottom: 1.25rem;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .card-status-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #10b981, #34d399);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+        }
+
+        .card-status-text strong {
+            display: block;
+            color: var(--gray-800);
+            font-weight: 600;
+        }
+
+        .card-status-text span {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+        }
+
+        .card-qr {
+            text-align: center;
+            padding: 2rem 0;
+        }
+
+        .card-qr i {
+            font-size: 140px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .card-footer-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--gray-100);
+        }
+
+        .card-balance span {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+            display: block;
+        }
+
+        .card-balance h5 {
+            color: var(--success);
+            font-weight: 700;
+            font-size: 1.25rem;
+            margin: 0;
+        }
+
+        .card-badge {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* Features Section */
+        .features-section {
+            padding: 120px 0;
+            background: var(--gray-50);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+            color: var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: 2.75rem;
+            font-weight: 800;
+            color: var(--gray-900);
+            margin-bottom: 1rem;
+            letter-spacing: -0.5px;
+        }
+
+        .section-subtitle {
+            font-size: 1.125rem;
+            color: var(--gray-500);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 24px;
+            padding: 2.5rem 2rem;
+            height: 100%;
+            transition: all 0.3s ease;
+            border: 1px solid var(--gray-100);
+            text-align: center;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 50px rgba(99, 102, 241, 0.15);
+            border-color: transparent;
+        }
+
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2rem;
+            color: white;
+        }
+
+        .feature-icon.primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+        .feature-icon.success { background: linear-gradient(135deg, #10b981, #34d399); }
+        .feature-icon.warning { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+        .feature-icon.info { background: linear-gradient(135deg, #0ea5e9, #38bdf8); }
+
+        .feature-card h4 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-card p {
+            color: var(--gray-500);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* How It Works */
+        .how-it-works {
+            padding: 120px 0;
+            background: white;
+        }
+
+        .step-card {
+            text-align: center;
+            padding: 2rem 1.5rem;
+            position: relative;
+        }
+
+        .step-number {
+            width: 70px;
+            height: 70px;
+            border-radius: 22px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+        }
+
+        .step-card h5 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0.75rem;
+        }
+
+        .step-card p {
+            color: var(--gray-500);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .step-connector {
+            position: absolute;
+            top: 55px;
+            left: 65%;
+            width: 70%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), transparent);
+            border-radius: 3px;
+        }
+
+        /* Stats Section */
+        .stats-section {
+            padding: 100px 0;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-number {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+
+        /* Benefits Section */
+        .benefits-section {
+            padding: 120px 0;
+            background: var(--gray-50);
+        }
+
+        .benefits-content {
+            padding-right: 3rem;
+        }
+
+        .benefit-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            border: 1px solid var(--gray-100);
+        }
+
+        .benefit-item:hover {
+            transform: translateX(8px);
+            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.1);
+            border-color: transparent;
+        }
+
+        .benefit-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .benefit-item h5 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0.375rem;
+        }
+
+        .benefit-item p {
+            color: var(--gray-500);
+            font-size: 0.95rem;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .dashboard-preview {
+            background: white;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.1);
+        }
+
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .dashboard-header i {
+            font-size: 1.5rem;
+        }
+
+        .dashboard-header span {
+            font-weight: 600;
+        }
+
+        .dashboard-body {
+            padding: 1.5rem;
+        }
+
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .dash-stat {
+            background: var(--gray-50);
+            border-radius: 16px;
+            padding: 1.25rem;
+            text-align: center;
+        }
+
+        .dash-stat h4 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 0.25rem;
+        }
+
+        .dash-stat.primary h4 { color: var(--primary); }
+        .dash-stat.success h4 { color: var(--success); }
+
+        .dash-stat small {
+            color: var(--gray-500);
+            font-size: 0.8rem;
+        }
+
+        .dash-activity {
+            background: var(--gray-50);
+            border-radius: 16px;
+            padding: 1.25rem;
+        }
+
+        .dash-activity-header {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .dash-activity-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--gray-200);
+            font-size: 0.9rem;
+        }
+
+        .dash-activity-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .dash-activity-item span:first-child {
+            color: var(--gray-700);
+        }
+
+        .dash-activity-item span:last-child {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 120px 0;
+            background: white;
+        }
+
+        .cta-box {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+            border-radius: 32px;
+            padding: 4rem 3rem;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-box::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 50%);
+        }
+
+        .cta-box h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .cta-box p {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .btn-cta {
+            background: white;
+            color: var(--primary);
+            padding: 1.125rem 2.5rem;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+        }
+
+        .btn-cta:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+            color: var(--primary-dark);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--gray-900);
+            color: white;
+            padding: 80px 0 40px;
+        }
+
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+        }
+
+        .footer-brand .brand-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .footer-desc {
+            color: var(--gray-400);
+            font-size: 0.95rem;
+            line-height: 1.7;
+            max-width: 300px;
+        }
+
+        .footer h6 {
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+            font-size: 1rem;
+        }
+
+        .footer ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .footer ul li {
+            margin-bottom: 0.75rem;
+        }
+
+        .footer a {
+            color: var(--gray-400);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+        }
+
+        .footer a:hover {
+            color: white;
+        }
+
+        .tech-badge {
+            background: var(--gray-800);
+            color: var(--gray-300);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: inline-block;
+            margin: 0.25rem;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid var(--gray-800);
+            margin-top: 3rem;
+            padding-top: 2rem;
+            text-align: center;
+            color: var(--gray-500);
+            font-size: 0.9rem;
+        }
+
+        /* Scroll animations */
+        .fade-up {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .fade-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 991px) {
+            .hero-title {
+                font-size: 2.75rem;
+            }
+
+            .hero-stats {
+                gap: 1.5rem;
+            }
+
+            .benefits-content {
+                padding-right: 0;
+                margin-bottom: 3rem;
+            }
+
+            .section-title {
+                font-size: 2.25rem;
+            }
+
+        }
+
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 100px 0 60px;
+            }
+
+            .hero-title {
+                font-size: 2.25rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1.1rem;
+            }
+
+            .hero-stats {
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+
+            .hero-stat {
+                flex: 0 0 calc(50% - 0.5rem);
+            }
+
+            .step-connector {
+                display: none;
+            }
+
+            .stat-number {
+                font-size: 2.5rem;
+            }
+
+            .cta-box {
+                padding: 3rem 2rem;
+            }
+
+            .cta-box h2 {
+                font-size: 1.875rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .hero-buttons {
+                flex-direction: column;
+            }
+
+            .btn-hero-primary,
+            .btn-hero-secondary {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 991px) {
+            .navbar-brand .brand-icon {
+                display: none;
+            }
+
+            .navbar-brand {
+                font-size: 1.35rem;
+            }
+
+            .navbar-brand i.mobile-icon {
+                display: inline-block;
+                margin-right: 0.375rem;
+                font-size: 1.25rem;
+            }
+
+            .navbar.scrolled .navbar-brand i.mobile-icon {
+                color: var(--primary);
+            }
+        }
+
+        @media (min-width: 992px) {
+            .navbar-brand i.mobile-icon {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container">
+            <a class="navbar-brand text-white" href="#">
+                <div class="brand-icon">
+                    <i class="bi bi-qr-code-scan"></i>
+                </div>
+                <i class="bi bi-qr-code-scan mobile-icon"></i>
+                Scan2Eat
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="Toggle navigation">
+                <i class="bi bi-list menu-icon"></i>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center gap-1">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="#features">Features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="#how-it-works">How It Works</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="#benefits">Benefits</a>
+                    </li>
+                    <li class="nav-item ms-lg-2">
+                        <a class="nav-link btn-nav" href="{{ url_for('login') }}">
+                            <i class="bi bi-box-arrow-in-right me-1"></i>Login
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <!-- Floating shapes -->
+        <div class="floating-shape"></div>
+        <div class="floating-shape"></div>
+        <div class="floating-shape"></div>
+        <div class="floating-shape"></div>
+
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 hero-content text-white mb-5 mb-lg-0">
+                    <div class="hero-badge">
+                        <i class="bi bi-stars"></i>
+                        Modern Mess Management
+                    </div>
+                    <h1 class="hero-title">
+                        Cashless Mess<br>Made Simple
+                    </h1>
+                    <p class="hero-subtitle">
+                        Transform your university hostel mess with our smart QR-based payment system. No cash, no hassle - just scan and eat!
+                    </p>
+                    <div class="hero-buttons">
+                        <a href="{{ url_for('login') }}" class="btn-hero-primary">
+                            <i class="bi bi-rocket-takeoff"></i>
+                            Get Started
+                        </a>
+                        <a href="#how-it-works" class="btn-hero-secondary">
+                            <i class="bi bi-play-circle"></i>
+                            See How It Works
+                        </a>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="hero-stat">
+                            <h3>100%</h3>
+                            <span>Cashless</span>
+                        </div>
+                        <div class="hero-stat">
+                            <h3>24/7</h3>
+                            <span>Access</span>
+                        </div>
+                        <div class="hero-stat">
+                            <h3>Real-time</h3>
+                            <span>Tracking</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 hero-image">
+                    <div class="floating-card">
+                        <div class="card-status">
+                            <div class="card-status-icon">
+                                <i class="bi bi-check-lg"></i>
+                            </div>
+                            <div class="card-status-text">
+                                <strong>Payment Successful!</strong>
+                                <span>Lunch - Rs. 80</span>
+                            </div>
+                        </div>
+                        <div class="card-qr">
+                            <i class="bi bi-qr-code"></i>
+                        </div>
+                        <div class="card-footer-info">
+                            <div class="card-balance">
+                                <span>Wallet Balance</span>
+                                <h5>Rs. 420</h5>
+                            </div>
+                            <span class="card-badge">
+                                <i class="bi bi-check-circle me-1"></i>Active
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section" id="features">
+        <div class="container">
+            <div class="section-header fade-up">
+                <div class="section-badge">
+                    <i class="bi bi-gear"></i>
+                    Features
+                </div>
+                <h2 class="section-title">Powerful Features</h2>
+                <p class="section-subtitle">Everything you need to manage your mess efficiently and transparently</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-4 fade-up">
+                    <div class="feature-card">
+                        <div class="feature-icon primary">
+                            <i class="bi bi-qr-code-scan"></i>
+                        </div>
+                        <h4>QR Code Scanning</h4>
+                        <p>Instant payment with unique QR codes for each student. Fast, secure, and contactless transactions.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 fade-up">
+                    <div class="feature-card">
+                        <div class="feature-icon success">
+                            <i class="bi bi-wallet2"></i>
+                        </div>
+                        <h4>Digital Wallet</h4>
+                        <p>Prepaid wallet system with easy recharge options. Track every transaction in real-time.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 fade-up">
+                    <div class="feature-card">
+                        <div class="feature-icon warning">
+                            <i class="bi bi-graph-up-arrow"></i>
+                        </div>
+                        <h4>Analytics & Reports</h4>
+                        <p>Comprehensive dashboards with insights on attendance, revenue, and meal patterns.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 fade-up">
+                    <div class="feature-card">
+                        <div class="feature-icon info">
+                            <i class="bi bi-cup-hot"></i>
+                        </div>
+                        <h4>Meal Management</h4>
+                        <p>Configure daily meals with prices and menu items. Students always know what's cooking!</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 fade-up">
+                    <div class="feature-card">
+                        <div class="feature-icon primary">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </div>
+                        <h4>Easy Refunds</h4>
+                        <p>Students can request refunds for uneaten meals. Admins approve with one click.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 fade-up">
+                    <div class="feature-card">
+                        <div class="feature-icon success">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <h4>Secure System</h4>
+                        <p>Password protected accounts with encrypted data. Your information stays safe.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-it-works" id="how-it-works">
+        <div class="container">
+            <div class="section-header fade-up">
+                <div class="section-badge">
+                    <i class="bi bi-lightning-charge"></i>
+                    Process
+                </div>
+                <h2 class="section-title">How It Works</h2>
+                <p class="section-subtitle">Simple steps to a cashless mess experience</p>
+            </div>
+            <div class="row">
+                <div class="col-md-6 col-lg-3 position-relative fade-up">
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <h5>Register</h5>
+                        <p>Admin registers students with their details and generates unique QR codes</p>
+                    </div>
+                    <div class="step-connector d-none d-lg-block"></div>
+                </div>
+                <div class="col-md-6 col-lg-3 position-relative fade-up">
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <h5>Add Balance</h5>
+                        <p>Students get wallet balance loaded by admin for meal payments</p>
+                    </div>
+                    <div class="step-connector d-none d-lg-block"></div>
+                </div>
+                <div class="col-md-6 col-lg-3 position-relative fade-up">
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <h5>Scan & Eat</h5>
+                        <p>Show QR at mess counter, get it scanned, and enjoy your meal</p>
+                    </div>
+                    <div class="step-connector d-none d-lg-block"></div>
+                </div>
+                <div class="col-md-6 col-lg-3 fade-up">
+                    <div class="step-card">
+                        <div class="step-number">4</div>
+                        <h5>Track</h5>
+                        <p>View transaction history, meal attendance, and wallet balance anytime</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-6 col-md-3 fade-up">
+                    <div class="stat-item">
+                        <div class="stat-number">3</div>
+                        <div class="stat-label">Meals Daily</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 fade-up">
+                    <div class="stat-item">
+                        <div class="stat-number">Unlimited</div>
+                        <div class="stat-label">Students Supported</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 fade-up">
+                    <div class="stat-item">
+                        <div class="stat-number">Zero</div>
+                        <div class="stat-label">Cash Needed</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 fade-up">
+                    <div class="stat-item">
+                        <div class="stat-number">24h</div>
+                        <div class="stat-label">Refund Window</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits Section -->
+    <section class="benefits-section" id="benefits">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 fade-up">
+                    <div class="benefits-content">
+                        <div class="section-badge">
+                            <i class="bi bi-star"></i>
+                            Benefits
+                        </div>
+                        <h2 class="section-title">Why Choose Scan2Eat?</h2>
+                        <p class="section-subtitle mb-4" style="margin: 0 0 2rem;">A complete solution designed for modern university hostels</p>
+
+                        <div class="benefit-item">
+                            <div class="benefit-icon">
+                                <i class="bi bi-lightning-charge"></i>
+                            </div>
+                            <div>
+                                <h5>Lightning Fast</h5>
+                                <p>QR scanning takes less than a second. No more long queues!</p>
+                            </div>
+                        </div>
+
+                        <div class="benefit-item">
+                            <div class="benefit-icon">
+                                <i class="bi bi-piggy-bank"></i>
+                            </div>
+                            <div>
+                                <h5>No Cash Handling</h5>
+                                <p>Eliminate cash management headaches. Everything is digital.</p>
+                            </div>
+                        </div>
+
+                        <div class="benefit-item">
+                            <div class="benefit-icon">
+                                <i class="bi bi-clipboard-data"></i>
+                            </div>
+                            <div>
+                                <h5>Complete Transparency</h5>
+                                <p>Every transaction is recorded. Full visibility for students and admins.</p>
+                            </div>
+                        </div>
+
+                        <div class="benefit-item">
+                            <div class="benefit-icon">
+                                <i class="bi bi-phone"></i>
+                            </div>
+                            <div>
+                                <h5>Mobile Friendly</h5>
+                                <p>Access from any device. Works perfectly on phones and tablets.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 fade-up">
+                    <div class="dashboard-preview">
+                        <div class="dashboard-header">
+                            <i class="bi bi-speedometer2"></i>
+                            <span>Admin Dashboard</span>
+                        </div>
+                        <div class="dashboard-body">
+                            <div class="dashboard-stats">
+                                <div class="dash-stat primary">
+                                    <h4>156</h4>
+                                    <small>Total Students</small>
+                                </div>
+                                <div class="dash-stat success">
+                                    <h4>89</h4>
+                                    <small>Today's Meals</small>
+                                </div>
+                            </div>
+                            <div class="dash-activity">
+                                <div class="dash-activity-header">Recent Activity</div>
+                                <div class="dash-activity-item">
+                                    <span>Ali Khan - Lunch</span>
+                                    <span>Rs. 80</span>
+                                </div>
+                                <div class="dash-activity-item">
+                                    <span>Sara Ahmed - Lunch</span>
+                                    <span>Rs. 80</span>
+                                </div>
+                                <div class="dash-activity-item">
+                                    <span>Usman Ali - Lunch</span>
+                                    <span>Rs. 80</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-box fade-up">
+                <h2>Ready to Go Cashless?</h2>
+                <p>Transform your mess management today with Scan2Eat</p>
+                <a href="{{ url_for('login') }}" class="btn-cta">
+                    <i class="bi bi-box-arrow-in-right"></i>
+                    Login Now
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <div class="footer-brand">
+                        <div class="brand-icon">
+                            <i class="bi bi-qr-code-scan"></i>
+                        </div>
+                        Scan2Eat
+                    </div>
+                    <p class="footer-desc">
+                        A modern cashless mess management system for university hostels. Making meal management simple, fast, and transparent.
+                    </p>
+                </div>
+                <div class="col-lg-2 col-md-4 mb-4 mb-md-0">
+                    <h6>Quick Links</h6>
+                    <ul>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#how-it-works">How It Works</a></li>
+                        <li><a href="#benefits">Benefits</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-4 mb-4 mb-md-0">
+                    <h6>For Users</h6>
+                    <ul>
+                        <li><a href="{{ url_for('login') }}">Student Login</a></li>
+                        <li><a href="{{ url_for('login') }}">Admin Login</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-4 col-md-4">
+                    <h6>Tech Stack</h6>
+                    <div class="d-flex flex-wrap">
+                        <span class="tech-badge">Python</span>
+                        <span class="tech-badge">Flask</span>
+                        <span class="tech-badge">PostgreSQL</span>
+                        <span class="tech-badge">Bootstrap</span>
+                        <span class="tech-badge">JavaScript</span>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p class="mb-0">&copy; 2024 Scan2Eat - Cashless Mess Management System. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Scroll animations with Intersection Observer
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry, index) => {
+                if (entry.isIntersecting) {
+                    // Add staggered delay based on index
+                    setTimeout(() => {
+                        entry.target.classList.add('visible');
+                    }, index * 100);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-up').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

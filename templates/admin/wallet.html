@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+
+{% block title %}Wallet Management - Scan2Eat{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 class="page-title">Wallet Management</h1>
+            <p class="page-subtitle">Add balance to student wallets</p>
+        </div>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card stat-card-primary">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Total Students</span>
+                    <h3 class="stat-value">{{ students|length }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card stat-card-success">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-wallet2"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Total Balance</span>
+                    <h3 class="stat-value">Rs. {{ "%.0f"|format(students|map(attribute='wallet_balance')|sum) }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card stat-card-warning">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Low Balance</span>
+                    <h3 class="stat-value">{{ students|selectattr('wallet_balance', 'lt', 100)|list|length }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card stat-card-info">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Avg. Balance</span>
+                    <h3 class="stat-value">Rs. {{ "%.0f"|format((students|map(attribute='wallet_balance')|sum) / (students|length or 1)) }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Add Balance Form -->
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-warning-subtle">
+                        <i class="bi bi-plus-circle text-warning"></i>
+                    </div>
+                    <h5 class="card-header-title">Add Balance</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('add_balance') }}">
+                    <div class="mb-4">
+                        <label for="student_id" class="form-label">Select Student</label>
+                        <select class="form-select form-select-lg" id="student_id" name="student_id" required>
+                            <option value="">-- Select Student --</option>
+                            {% for student in students %}
+                            <option value="{{ student.id }}">
+                                {{ student.name }} ({{ student.username }}) - Rs. {{ "%.0f"|format(student.wallet_balance) }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="amount" class="form-label">Amount to Add</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text">Rs.</span>
+                            <input type="number" class="form-control" id="amount" name="amount" required min="1" step="0.01" placeholder="Enter amount">
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-warning btn-lg">
+                            <i class="bi bi-plus-circle me-2"></i>Add Balance
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Quick Add Buttons -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-info-subtle">
+                        <i class="bi bi-lightning-charge text-info"></i>
+                    </div>
+                    <h5 class="card-header-title">Quick Add</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-outline-primary quick-amount-btn" data-amount="100">Rs. 100</button>
+                    <button class="btn btn-outline-primary quick-amount-btn" data-amount="200">Rs. 200</button>
+                    <button class="btn btn-outline-primary quick-amount-btn" data-amount="500">Rs. 500</button>
+                    <button class="btn btn-outline-primary quick-amount-btn" data-amount="1000">Rs. 1000</button>
+                    <button class="btn btn-outline-primary quick-amount-btn" data-amount="2000">Rs. 2000</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Balances -->
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="card-header-icon bg-primary-subtle">
+                            <i class="bi bi-people text-primary"></i>
+                        </div>
+                        <h5 class="card-header-title">Student Balances</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if students %}
+                <div class="wallet-students-list">
+                    {% for student in students %}
+                    <div class="wallet-student-item">
+                        <div class="student-avatar">
+                            {{ student.name[0]|upper }}
+                        </div>
+                        <div class="wallet-student-details">
+                            <div class="wallet-student-name">{{ student.name }}</div>
+                            <div class="wallet-student-info">
+                                <span class="roll-number">{{ student.username }}</span>
+                                <span class="text-muted">Room {{ student.room_number }}</span>
+                            </div>
+                        </div>
+                        <div class="wallet-student-balance">
+                            <span class="balance-badge {{ 'high' if student.wallet_balance > 100 else 'medium' if student.wallet_balance > 0 else 'low' }}">
+                                Rs. {{ "%.0f"|format(student.wallet_balance) }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-people"></i>
+                    <p>No students registered yet</p>
+                    <a href="{{ url_for('register_student') }}" class="btn btn-success mt-3">
+                        <i class="bi bi-person-plus me-2"></i>Register First Student
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const amountInput = document.getElementById('amount');
+    const quickBtns = document.querySelectorAll('.quick-amount-btn');
+
+    quickBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            amountInput.value = this.dataset.amount;
+            amountInput.focus();
+        });
+    });
+});
+</script>
+{% endblock %}

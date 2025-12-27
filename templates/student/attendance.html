@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}My Attendance - Scan2Eat{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 class="page-title">Attendance History</h1>
+            <p class="page-subtitle">View all your meal attendance records</p>
+        </div>
+        <a href="{{ url_for('student_meals') }}" class="btn btn-outline-primary">
+            <i class="bi bi-cup-hot me-2"></i>View Meals
+        </a>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card stat-card-primary">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Total Meals</span>
+                    <h3 class="stat-value">{{ attendances|length }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card stat-card-warning">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-sunrise"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Breakfast</span>
+                    <h3 class="stat-value">{{ attendances|selectattr('meal.meal_type', 'equalto', 'breakfast')|list|length }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card stat-card-success">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-sun"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Lunch</span>
+                    <h3 class="stat-value">{{ attendances|selectattr('meal.meal_type', 'equalto', 'lunch')|list|length }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card stat-card-info">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-moon-stars"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Dinner</span>
+                    <h3 class="stat-value">{{ attendances|selectattr('meal.meal_type', 'equalto', 'dinner')|list|length }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Attendance List -->
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <div class="card-header-icon bg-primary-subtle">
+                    <i class="bi bi-list-check text-primary"></i>
+                </div>
+                <h5 class="card-header-title">Attendance Records</h5>
+            </div>
+            {% if attendances %}
+            <span class="badge bg-primary">{{ attendances|length }} records</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card-body p-0">
+        {% if attendances %}
+        <div class="attendance-list">
+            {% for attendance in attendances %}
+            <div class="attendance-item">
+                <div class="attendance-icon {{ attendance.meal.meal_type }}">
+                    <i class="bi bi-{{ 'sunrise' if attendance.meal.meal_type == 'breakfast' else 'sun' if attendance.meal.meal_type == 'lunch' else 'moon-stars' }}"></i>
+                </div>
+                <div class="attendance-details">
+                    <div class="attendance-main">
+                        <div class="attendance-info">
+                            <span class="attendance-meal">{{ attendance.meal.meal_type|capitalize }}</span>
+                            <span class="attendance-date">{{ attendance.meal.date.strftime('%A, %d %b %Y') }}</span>
+                        </div>
+                        <div class="attendance-amount">
+                            Rs. {{ "%.0f"|format(attendance.amount_paid) }}
+                        </div>
+                    </div>
+                    <div class="attendance-meta">
+                        <span class="attendance-time">
+                            <i class="bi bi-clock me-1"></i>Scanned at {{ attendance.scanned_at.strftime('%I:%M %p') }}
+                        </span>
+                        {% if attendance.meal.menu_items %}
+                        <span class="attendance-menu">
+                            <i class="bi bi-card-list me-1"></i>{{ attendance.meal.menu_items[:40] }}{{ '...' if attendance.meal.menu_items|length > 40 else '' }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-calendar-x"></i>
+            <p>No attendance records found</p>
+            <span class="text-muted">Your attendance will appear here after you scan your QR code at the mess</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if attendances %}
+<!-- Total Spent Card -->
+<div class="total-spent-card mt-4">
+    <div class="total-spent-icon">
+        <i class="bi bi-cash-stack"></i>
+    </div>
+    <div class="total-spent-content">
+        <span class="total-spent-label">Total Amount Spent on Meals</span>
+        <h3 class="total-spent-value">Rs. {{ "%.2f"|format(attendances|map(attribute='amount_paid')|sum) }}</h3>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

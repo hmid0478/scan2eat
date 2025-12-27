@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+
+{% block title %}Students List - Scan2Eat{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 class="page-title">Registered Students</h1>
+            <p class="page-subtitle">Manage student accounts and view their details</p>
+        </div>
+        <a href="{{ url_for('register_student') }}" class="btn btn-success">
+            <i class="bi bi-person-plus me-2"></i>Add New Student
+        </a>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card stat-card-primary">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Total Students</span>
+                    <h3 class="stat-value">{{ students|length }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card stat-card-success">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-person-check"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Active</span>
+                    <h3 class="stat-value">{{ students|selectattr('is_active')|list|length }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card stat-card-warning">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-person-dash"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Inactive</span>
+                    <h3 class="stat-value">{{ students|rejectattr('is_active')|list|length }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card stat-card-info">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-wallet2"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Total Balance</span>
+                    <h3 class="stat-value">Rs. {{ "%.0f"|format(students|map(attribute='wallet_balance')|sum) }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Card -->
+<div class="card mb-4">
+    <div class="card-body py-3">
+        <div class="d-flex align-items-center flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-2">
+                <div class="filter-icon">
+                    <i class="bi bi-funnel text-primary"></i>
+                </div>
+                <span class="text-muted fw-medium">Filter:</span>
+            </div>
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('list_students', status='active') }}" class="btn btn-sm {{ 'btn-primary' if status_filter == 'active' else 'btn-outline-primary' }}">
+                    <i class="bi bi-check-circle me-1"></i>Active
+                </a>
+                <a href="{{ url_for('list_students', status='inactive') }}" class="btn btn-sm {{ 'btn-warning' if status_filter == 'inactive' else 'btn-outline-warning' }}">
+                    <i class="bi bi-pause-circle me-1"></i>Inactive
+                </a>
+                <a href="{{ url_for('list_students', status='all') }}" class="btn btn-sm {{ 'btn-secondary' if status_filter == 'all' else 'btn-outline-secondary' }}">
+                    <i class="bi bi-list me-1"></i>All
+                </a>
+            </div>
+            <div class="ms-auto">
+                <span class="badge bg-primary">{{ students|length }} student{{ 's' if students|length != 1 else '' }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Students List -->
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex align-items-center gap-2">
+            <div class="card-header-icon bg-primary-subtle">
+                <i class="bi bi-people text-primary"></i>
+            </div>
+            <h5 class="card-header-title">Students List</h5>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        {% if students %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">#</th>
+                        <th>Student</th>
+                        <th>Roll Number</th>
+                        <th>Room</th>
+                        <th>Balance</th>
+                        <th>Status</th>
+                        <th>QR Code</th>
+                        <th>Registered</th>
+                        <th style="width: 120px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr class="{{ 'table-row-inactive' if not student.is_active else '' }}">
+                        <td class="text-muted">{{ loop.index }}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="student-avatar {{ 'inactive' if not student.is_active else '' }}">
+                                    {{ student.name[0]|upper }}
+                                </div>
+                                <strong>{{ student.name }}</strong>
+                            </div>
+                        </td>
+                        <td><code class="roll-number">{{ student.username }}</code></td>
+                        <td>{{ student.room_number }}</td>
+                        <td>
+                            <span class="balance-badge {{ 'high' if student.wallet_balance > 100 else 'medium' if student.wallet_balance > 0 else 'low' }}">
+                                Rs. {{ "%.0f"|format(student.wallet_balance) }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status-pill {{ 'active' if student.is_active else 'inactive' }}" id="status-badge-{{ student.id }}">
+                                <i class="bi bi-{{ 'check-circle' if student.is_active else 'pause-circle' }} me-1"></i>
+                                {{ 'Active' if student.is_active else 'Inactive' }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if student.qr_code_path %}
+                            <a href="{{ url_for('static', filename=student.qr_code_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-qr-code"></i>
+                            </a>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted">{{ student.created_at.strftime('%d %b %Y') }}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{{ url_for('edit_student', student_id=student.id) }}" class="btn btn-sm btn-outline-primary" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% if student.is_active %}
+                                <button class="btn btn-sm btn-outline-danger" onclick="toggleStudentStatus({{ student.id }}, '{{ student.name }}', true)" title="Deactivate">
+                                    <i class="bi bi-person-dash"></i>
+                                </button>
+                                {% else %}
+                                <button class="btn btn-sm btn-outline-success" onclick="toggleStudentStatus({{ student.id }}, '{{ student.name }}', false)" title="Activate">
+                                    <i class="bi bi-person-check"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-people"></i>
+            {% if status_filter == 'inactive' %}
+            <p>No inactive students</p>
+            <span class="text-muted">All students are currently active</span>
+            {% elif status_filter == 'active' %}
+            <p>No active students</p>
+            <a href="{{ url_for('register_student') }}" class="btn btn-success mt-3">
+                <i class="bi bi-person-plus me-2"></i>Register First Student
+            </a>
+            {% else %}
+            <p>No students registered yet</p>
+            <a href="{{ url_for('register_student') }}" class="btn btn-success mt-3">
+                <i class="bi bi-person-plus me-2"></i>Register First Student
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function toggleStudentStatus(studentId, studentName, isCurrentlyActive) {
+    const action = isCurrentlyActive ? 'deactivate' : 'activate';
+    const message = isCurrentlyActive
+        ? `Are you sure you want to deactivate "${studentName}"?\n\nThey will not be able to login or scan meals, but their history will be preserved.`
+        : `Are you sure you want to activate "${studentName}"?\n\nThey will be able to login and scan meals again.`;
+
+    if (!confirm(message)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/admin/toggle-student-status/${studentId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            Toast.show(data.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            Toast.show(data.message, 'error');
+        }
+    } catch (error) {
+        Toast.show('Failed to update student status', 'error');
+    }
+}
+</script>
+{% endblock %}

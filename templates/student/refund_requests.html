@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+
+{% block title %}Refund Requests - Scan2Eat{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 class="page-title">Refund Requests</h1>
+            <p class="page-subtitle">Request refunds for meals you didn't take</p>
+        </div>
+        <a href="{{ url_for('student_wallet') }}" class="btn btn-outline-primary">
+            <i class="bi bi-wallet2 me-2"></i>View Wallet
+        </a>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+{% if refund_requests %}
+<div class="row g-4 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card stat-card-warning">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Pending</span>
+                    <h3 class="stat-value">{{ refund_requests|selectattr('status', 'equalto', 'pending')|list|length }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card stat-card-success">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Approved</span>
+                    <h3 class="stat-value">{{ refund_requests|selectattr('status', 'equalto', 'approved')|list|length }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card stat-card-primary">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-x-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Rejected</span>
+                    <h3 class="stat-value">{{ refund_requests|selectattr('status', 'equalto', 'rejected')|list|length }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card stat-card-info">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Total Refunded</span>
+                    <h3 class="stat-value">Rs. {{ "%.0f"|format(refund_requests|selectattr('status', 'equalto', 'approved')|map(attribute='amount')|sum) }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Eligible Meals for Refund -->
+{% if eligible_attendances %}
+<div class="card mb-4">
+    <div class="card-header">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <div class="card-header-icon bg-warning-subtle">
+                    <i class="bi bi-clock-history text-warning"></i>
+                </div>
+                <div>
+                    <h5 class="card-header-title">Request Refund</h5>
+                    <span class="text-muted" style="font-size: 0.8rem;">Within 24 hours of scan</span>
+                </div>
+            </div>
+            <span class="badge bg-warning">{{ eligible_attendances|length }} eligible</span>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="eligible-meals-list">
+            {% for attendance in eligible_attendances %}
+            <div class="eligible-meal-item">
+                <div class="eligible-meal-icon {{ attendance.meal.meal_type }}">
+                    <i class="bi bi-{{ 'sunrise' if attendance.meal.meal_type == 'breakfast' else 'sun' if attendance.meal.meal_type == 'lunch' else 'moon-stars' }}"></i>
+                </div>
+                <div class="eligible-meal-details">
+                    <div class="eligible-meal-main">
+                        <div class="eligible-meal-info">
+                            <span class="eligible-meal-type">{{ attendance.meal.meal_type|capitalize }}</span>
+                            <span class="eligible-meal-date">{{ attendance.meal.date.strftime('%A, %d %b %Y') }}</span>
+                        </div>
+                        <div class="eligible-meal-amount">
+                            Rs. {{ "%.0f"|format(attendance.amount_paid) }}
+                        </div>
+                    </div>
+                    <div class="eligible-meal-meta">
+                        <span class="eligible-meal-time">
+                            <i class="bi bi-clock me-1"></i>Scanned at {{ attendance.scanned_at.strftime('%I:%M %p') }}
+                        </span>
+                    </div>
+                </div>
+                <button class="btn btn-outline-danger btn-sm" onclick="requestRefund({{ attendance.id }}, '{{ attendance.meal.meal_type }}', {{ attendance.amount_paid }})">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i>Request
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- My Refund Requests -->
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <div class="card-header-icon bg-primary-subtle">
+                    <i class="bi bi-list-check text-primary"></i>
+                </div>
+                <h5 class="card-header-title">My Refund Requests</h5>
+            </div>
+            {% if refund_requests %}
+            <span class="badge bg-primary">{{ refund_requests|length }} requests</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card-body p-0">
+        {% if refund_requests %}
+        <div class="refund-requests-list">
+            {% for req in refund_requests %}
+            <div class="refund-request-item {{ req.status }}">
+                <div class="refund-request-icon {{ req.attendance.meal.meal_type }}">
+                    <i class="bi bi-{{ 'sunrise' if req.attendance.meal.meal_type == 'breakfast' else 'sun' if req.attendance.meal.meal_type == 'lunch' else 'moon-stars' }}"></i>
+                </div>
+                <div class="refund-request-details">
+                    <div class="refund-request-main">
+                        <div class="refund-request-info">
+                            <span class="refund-request-meal">{{ req.attendance.meal.meal_type|capitalize }}</span>
+                            <span class="refund-request-date">{{ req.attendance.meal.date.strftime('%d %b %Y') }}</span>
+                        </div>
+                        <div class="refund-request-amount">
+                            Rs. {{ "%.0f"|format(req.amount) }}
+                        </div>
+                    </div>
+                    <div class="refund-request-meta">
+                        <span class="refund-request-time">
+                            <i class="bi bi-calendar3 me-1"></i>Requested {{ req.created_at.strftime('%d %b, %I:%M %p') }}
+                        </span>
+                        {% if req.reason %}
+                        <span class="refund-request-reason">
+                            <i class="bi bi-chat-text me-1"></i>{{ req.reason[:50] }}{{ '...' if req.reason|length > 50 else '' }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% if req.admin_remarks %}
+                    <div class="refund-request-remarks">
+                        <i class="bi bi-reply me-1"></i>{{ req.admin_remarks }}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="refund-request-status">
+                    {% if req.status == 'pending' %}
+                    <span class="status-pill pending">
+                        <i class="bi bi-hourglass-split me-1"></i>Pending
+                    </span>
+                    {% elif req.status == 'approved' %}
+                    <span class="status-pill approved">
+                        <i class="bi bi-check-circle me-1"></i>Approved
+                    </span>
+                    {% else %}
+                    <span class="status-pill rejected">
+                        <i class="bi bi-x-circle me-1"></i>Rejected
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <p>No refund requests yet</p>
+            <span class="text-muted">
+                {% if eligible_attendances %}
+                You can request refunds for meals scanned within 24 hours
+                {% else %}
+                Refunds can be requested within 24 hours of meal scan
+                {% endif %}
+            </span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Info Card -->
+<div class="info-card mt-4">
+    <div class="info-card-icon">
+        <i class="bi bi-info-circle"></i>
+    </div>
+    <div class="info-card-content">
+        <h6>Refund Policy</h6>
+        <p>You can request a refund within 24 hours of scanning your QR code if you didn't take the meal. Refunds are subject to admin approval and will be credited back to your wallet.</p>
+    </div>
+</div>
+
+<!-- Refund Request Modal -->
+<div class="modal fade" id="refundModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content refund-modal">
+            <div class="modal-header">
+                <div class="modal-header-content">
+                    <div class="modal-icon">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </div>
+                    <h5 class="modal-title">Request Refund</h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="refund-summary">
+                    <div class="refund-summary-label">Requesting refund for</div>
+                    <div class="refund-summary-details">
+                        <span id="modal-meal-type" class="refund-meal-type"></span>
+                        <span id="modal-amount" class="refund-amount"></span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="refund-reason" class="form-label">Reason (Optional)</label>
+                    <textarea class="form-control" id="refund-reason" rows="3" placeholder="Why didn't you take the meal?"></textarea>
+                    <div class="form-text">Providing a reason may help speed up the approval process.</div>
+                </div>
+                <input type="hidden" id="modal-attendance-id">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="submitRefundRequest()">
+                    <i class="bi bi-send me-2"></i>Submit Request
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let refundModal;
+
+document.addEventListener('DOMContentLoaded', function() {
+    refundModal = new bootstrap.Modal(document.getElementById('refundModal'));
+});
+
+function requestRefund(attendanceId, mealType, amount) {
+    document.getElementById('modal-attendance-id').value = attendanceId;
+    document.getElementById('modal-meal-type').textContent = mealType.charAt(0).toUpperCase() + mealType.slice(1);
+    document.getElementById('modal-amount').textContent = 'Rs. ' + amount.toFixed(0);
+    document.getElementById('refund-reason').value = '';
+    refundModal.show();
+}
+
+async function submitRefundRequest() {
+    const attendanceId = document.getElementById('modal-attendance-id').value;
+    const reason = document.getElementById('refund-reason').value;
+
+    try {
+        const response = await fetch(`/student/request-refund/${attendanceId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason: reason })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            Toast.show(data.message, 'success');
+            refundModal.hide();
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            Toast.show(data.message, 'error');
+        }
+    } catch (error) {
+        Toast.show('Failed to submit refund request', 'error');
+    }
+}
+</script>
+{% endblock %}

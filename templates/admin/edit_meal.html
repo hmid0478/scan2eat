@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Meal - Scan2Eat{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 class="page-title">Edit Meal</h1>
+            <p class="page-subtitle">Update meal details</p>
+        </div>
+        <a href="{{ url_for('manage_meals') }}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left me-2"></i>Back to Meals
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-primary-subtle">
+                        <i class="bi bi-pencil-square text-primary"></i>
+                    </div>
+                    <h5 class="card-header-title">Meal Details</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('edit_meal', meal_id=meal.id) }}">
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Date</label>
+                        <div class="input-icon-wrapper">
+                            <i class="bi bi-calendar3"></i>
+                            <input type="date" class="form-control" id="date" name="date" value="{{ meal.date.isoformat() }}" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="meal_type" class="form-label">Meal Type</label>
+                        <select class="form-select" id="meal_type" name="meal_type" required>
+                            <option value="breakfast" {% if meal.meal_type == 'breakfast' %}selected{% endif %}>Breakfast</option>
+                            <option value="lunch" {% if meal.meal_type == 'lunch' %}selected{% endif %}>Lunch</option>
+                            <option value="dinner" {% if meal.meal_type == 'dinner' %}selected{% endif %}>Dinner</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="price" class="form-label">Price</label>
+                        <div class="input-group">
+                            <span class="input-group-text">Rs.</span>
+                            <input type="number" class="form-control" id="price" name="price" required min="1" step="0.01" value="{{ meal.price }}">
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label for="menu_items" class="form-label">Menu Items</label>
+                        <textarea class="form-control" id="menu_items" name="menu_items" rows="4" placeholder="Enter food items (one per line)">{{ meal.menu_items or '' }}</textarea>
+                        <div class="form-text">Enter each food item on a new line</div>
+                    </div>
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if meal.is_active %}checked{% endif %} style="width: 3em; height: 1.5em;">
+                            <label class="form-check-label ms-2" for="is_active">
+                                <strong>Active</strong>
+                                <span class="d-block text-muted small">Inactive meals won't appear in the scanner</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle me-2"></i>Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

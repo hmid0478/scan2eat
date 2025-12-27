@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Dashboard - Scan2Eat{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 class="page-title">Welcome, {{ current_user.name }}!</h1>
+            <p class="page-subtitle">Here's your account overview and today's meals.</p>
+        </div>
+        <a href="{{ url_for('student_profile') }}" class="btn btn-outline-primary">
+            <i class="bi bi-qr-code me-2"></i>View My QR
+        </a>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-sm-6 col-lg-4">
+        <div class="stat-card stat-card-success">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-credit-card"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Wallet Balance</span>
+                    <h3 class="stat-value">Rs. {{ "%.2f"|format(current_user.wallet_balance) }}</h3>
+                </div>
+            </div>
+            <a href="{{ url_for('student_wallet') }}" class="stat-card-footer">
+                <span>View transactions</span>
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-4">
+        <div class="stat-card stat-card-primary">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-person-badge"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Roll Number</span>
+                    <h3 class="stat-value">{{ current_user.username }}</h3>
+                </div>
+            </div>
+            <a href="{{ url_for('student_profile') }}" class="stat-card-footer">
+                <span>View profile</span>
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-4">
+        <div class="stat-card stat-card-info">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-door-open"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Room Number</span>
+                    <h3 class="stat-value">{{ current_user.room_number }}</h3>
+                </div>
+            </div>
+            <a href="{{ url_for('student_attendance') }}" class="stat-card-footer">
+                <span>View attendance</span>
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Meals and Transactions -->
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-warning-subtle">
+                        <i class="bi bi-cup-hot text-warning"></i>
+                    </div>
+                    <h5 class="card-header-title">Today's Meals</h5>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if today_meals %}
+                <div class="meal-list">
+                    {% for meal in today_meals %}
+                    <div class="meal-item">
+                        <div class="meal-icon {{ meal.meal_type }}">
+                            <i class="bi bi-{{ 'sunrise' if meal.meal_type == 'breakfast' else 'sun' if meal.meal_type == 'lunch' else 'moon-stars' }}"></i>
+                        </div>
+                        <div class="meal-info">
+                            <span class="meal-type">{{ meal.meal_type|capitalize }}</span>
+                            <span class="meal-menu">{{ meal.menu_items[:50] + '...' if meal.menu_items and meal.menu_items|length > 50 else meal.menu_items or 'Menu not available' }}</span>
+                        </div>
+                        <div class="meal-price">
+                            Rs. {{ "%.0f"|format(meal.price) }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="p-3">
+                    <a href="{{ url_for('student_meals') }}" class="btn btn-outline-primary btn-sm w-100">
+                        View All Meals
+                    </a>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-cup-hot"></i>
+                    <p>No meals scheduled for today</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-success-subtle">
+                        <i class="bi bi-clock-history text-success"></i>
+                    </div>
+                    <h5 class="card-header-title">Recent Transactions</h5>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_transactions %}
+                <div class="transaction-list">
+                    {% for tx in recent_transactions %}
+                    <div class="transaction-item">
+                        <div class="transaction-icon {{ tx.transaction_type }}">
+                            <i class="bi bi-{{ 'arrow-down-left' if tx.transaction_type == 'credit' else 'arrow-up-right' }}"></i>
+                        </div>
+                        <div class="transaction-info">
+                            <span class="transaction-desc">{{ tx.description }}</span>
+                            <span class="transaction-date">{{ tx.created_at.strftime('%d %b, %I:%M %p') }}</span>
+                        </div>
+                        <div class="transaction-amount {{ tx.transaction_type }}">
+                            {{ '+' if tx.transaction_type == 'credit' else '-' }}Rs. {{ "%.0f"|format(tx.amount|abs) }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="p-3">
+                    <a href="{{ url_for('student_wallet') }}" class="btn btn-outline-primary btn-sm w-100">
+                        View All Transactions
+                    </a>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-clock-history"></i>
+                    <p>No transactions yet</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row g-4 mt-2">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-primary-subtle">
+                        <i class="bi bi-lightning-charge text-primary"></i>
+                    </div>
+                    <h5 class="card-header-title">Quick Actions</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6 col-md-3">
+                        <a href="{{ url_for('student_profile') }}" class="quick-action-card">
+                            <i class="bi bi-qr-code"></i>
+                            <span>My QR Code</span>
+                        </a>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <a href="{{ url_for('student_wallet') }}" class="quick-action-card">
+                            <i class="bi bi-credit-card"></i>
+                            <span>Wallet</span>
+                        </a>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <a href="{{ url_for('student_attendance') }}" class="quick-action-card">
+                            <i class="bi bi-calendar-check"></i>
+                            <span>Attendance</span>
+                        </a>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <a href="{{ url_for('student_refund_requests') }}" class="quick-action-card">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                            <span>Refund</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

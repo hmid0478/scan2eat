@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+
+{% block title %}Refund Requests - Scan2Eat Admin{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 class="page-title">Refund Requests</h1>
+            <p class="page-subtitle">Review and process student refund requests</p>
+        </div>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card stat-card-warning">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Pending</span>
+                    <h3 class="stat-value">{{ pending_requests|length }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card stat-card-success">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Approved</span>
+                    <h3 class="stat-value">{{ processed_requests|selectattr('status', 'equalto', 'approved')|list|length }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card stat-card-primary">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-x-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Rejected</span>
+                    <h3 class="stat-value">{{ processed_requests|selectattr('status', 'equalto', 'rejected')|list|length }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card stat-card-info">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Total Refunded</span>
+                    <h3 class="stat-value">Rs. {{ "%.0f"|format(processed_requests|selectattr('status', 'equalto', 'approved')|map(attribute='amount')|sum) }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Requests -->
+<div class="card mb-4">
+    <div class="card-header">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <div class="card-header-icon bg-warning-subtle">
+                    <i class="bi bi-hourglass-split text-warning"></i>
+                </div>
+                <h5 class="card-header-title">Pending Requests</h5>
+            </div>
+            {% if pending_requests %}
+            <span class="badge bg-warning text-dark">{{ pending_requests|length }} pending</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card-body p-0">
+        {% if pending_requests %}
+        <div class="admin-refund-list">
+            {% for req in pending_requests %}
+            <div class="admin-refund-item pending">
+                <div class="admin-refund-student">
+                    <div class="student-avatar">{{ req.user.name[0]|upper }}</div>
+                    <div class="student-info">
+                        <span class="student-name">{{ req.user.name }}</span>
+                        <span class="student-roll">{{ req.user.username }}</span>
+                    </div>
+                </div>
+                <div class="admin-refund-meal">
+                    <span class="meal-type-badge {{ req.attendance.meal.meal_type }}">
+                        <i class="bi bi-{{ 'sunrise' if req.attendance.meal.meal_type == 'breakfast' else 'sun' if req.attendance.meal.meal_type == 'lunch' else 'moon-stars' }} me-1"></i>
+                        {{ req.attendance.meal.meal_type|capitalize }}
+                    </span>
+                    <span class="meal-date">{{ req.attendance.meal.date.strftime('%d %b %Y') }}</span>
+                </div>
+                <div class="admin-refund-amount">
+                    Rs. {{ "%.0f"|format(req.amount) }}
+                </div>
+                <div class="admin-refund-reason">
+                    {% if req.reason %}
+                    <span title="{{ req.reason }}">{{ req.reason[:30] }}{{ '...' if req.reason|length > 30 else '' }}</span>
+                    {% else %}
+                    <span class="text-muted">No reason</span>
+                    {% endif %}
+                </div>
+                <div class="admin-refund-time">
+                    {{ req.created_at.strftime('%d %b, %I:%M %p') }}
+                </div>
+                <div class="admin-refund-actions">
+                    <button class="btn btn-sm btn-success" onclick="processRefund({{ req.id }}, 'approve', '{{ req.user.name }}', {{ req.amount }})" title="Approve">
+                        <i class="bi bi-check-lg me-1"></i>Approve
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="processRefund({{ req.id }}, 'reject', '{{ req.user.name }}', {{ req.amount }})" title="Reject">
+                        <i class="bi bi-x-lg me-1"></i>Reject
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-check-circle text-success"></i>
+            <p>No pending refund requests</p>
+            <span class="text-muted">All caught up! Check back later.</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Processed Requests -->
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <div class="card-header-icon bg-secondary-subtle">
+                    <i class="bi bi-list-check text-secondary"></i>
+                </div>
+                <h5 class="card-header-title">Recently Processed</h5>
+            </div>
+            {% if processed_requests %}
+            <span class="badge bg-secondary">{{ processed_requests|length }} processed</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card-body p-0">
+        {% if processed_requests %}
+        <div class="admin-refund-list">
+            {% for req in processed_requests %}
+            <div class="admin-refund-item {{ req.status }}">
+                <div class="admin-refund-student">
+                    <div class="student-avatar small">{{ req.user.name[0]|upper }}</div>
+                    <div class="student-info">
+                        <span class="student-name">{{ req.user.name }}</span>
+                        <span class="student-roll">{{ req.user.username }}</span>
+                    </div>
+                </div>
+                <div class="admin-refund-meal">
+                    <span class="meal-type-badge {{ req.attendance.meal.meal_type }}">
+                        {{ req.attendance.meal.meal_type|capitalize }}
+                    </span>
+                    <span class="meal-date">{{ req.attendance.meal.date.strftime('%d %b') }}</span>
+                </div>
+                <div class="admin-refund-amount">
+                    Rs. {{ "%.0f"|format(req.amount) }}
+                </div>
+                <div class="admin-refund-status">
+                    {% if req.status == 'approved' %}
+                    <span class="status-pill approved">
+                        <i class="bi bi-check-circle me-1"></i>Approved
+                    </span>
+                    {% else %}
+                    <span class="status-pill rejected">
+                        <i class="bi bi-x-circle me-1"></i>Rejected
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="admin-refund-remarks">
+                    {% if req.admin_remarks %}
+                    <span title="{{ req.admin_remarks }}">{{ req.admin_remarks[:25] }}{{ '...' if req.admin_remarks|length > 25 else '' }}</span>
+                    {% else %}
+                    <span class="text-muted">-</span>
+                    {% endif %}
+                </div>
+                <div class="admin-refund-time">
+                    {{ req.processed_at.strftime('%d %b, %I:%M %p') if req.processed_at else '-' }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <p>No processed requests yet</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Process Modal -->
+<div class="modal fade" id="processModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content refund-modal">
+            <div class="modal-header">
+                <div class="modal-header-content">
+                    <div class="modal-icon" id="modal-icon">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <h5 class="modal-title" id="modal-title">Process Refund</h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modal-message"></div>
+                <div class="mb-3">
+                    <label for="admin-remarks" class="form-label">Remarks (Optional)</label>
+                    <textarea class="form-control" id="admin-remarks" rows="2" placeholder="Add any remarks..."></textarea>
+                </div>
+                <input type="hidden" id="modal-request-id">
+                <input type="hidden" id="modal-action">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn" id="modal-submit-btn" onclick="submitProcess()">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let processModal;
+
+document.addEventListener('DOMContentLoaded', function() {
+    processModal = new bootstrap.Modal(document.getElementById('processModal'));
+});
+
+function processRefund(requestId, action, studentName, amount) {
+    document.getElementById('modal-request-id').value = requestId;
+    document.getElementById('modal-action').value = action;
+    document.getElementById('admin-remarks').value = '';
+
+    const submitBtn = document.getElementById('modal-submit-btn');
+    const modalIcon = document.getElementById('modal-icon');
+
+    if (action === 'approve') {
+        document.getElementById('modal-title').textContent = 'Approve Refund';
+        document.getElementById('modal-message').innerHTML = `
+            <div class="refund-summary approve">
+                <div class="refund-summary-icon"><i class="bi bi-check-circle text-success"></i></div>
+                <div class="refund-summary-text">
+                    <span>Approve refund of <strong>Rs. ${amount.toFixed(0)}</strong> for <strong>${studentName}</strong>?</span>
+                    <small>Amount will be credited to student's wallet.</small>
+                </div>
+            </div>
+        `;
+        modalIcon.className = 'modal-icon success';
+        modalIcon.innerHTML = '<i class="bi bi-check-circle"></i>';
+        submitBtn.className = 'btn btn-success';
+        submitBtn.textContent = 'Approve Refund';
+    } else {
+        document.getElementById('modal-title').textContent = 'Reject Refund';
+        document.getElementById('modal-message').innerHTML = `
+            <div class="refund-summary reject">
+                <div class="refund-summary-icon"><i class="bi bi-x-circle text-danger"></i></div>
+                <div class="refund-summary-text">
+                    <span>Reject refund request of <strong>Rs. ${amount.toFixed(0)}</strong> from <strong>${studentName}</strong>?</span>
+                </div>
+            </div>
+        `;
+        modalIcon.className = 'modal-icon danger';
+        modalIcon.innerHTML = '<i class="bi bi-x-circle"></i>';
+        submitBtn.className = 'btn btn-danger';
+        submitBtn.textContent = 'Reject Request';
+    }
+
+    processModal.show();
+}
+
+async function submitProcess() {
+    const requestId = document.getElementById('modal-request-id').value;
+    const action = document.getElementById('modal-action').value;
+    const remarks = document.getElementById('admin-remarks').value;
+
+    try {
+        const response = await fetch(`/admin/process-refund/${requestId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ action: action, remarks: remarks })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            Toast.show(data.message, 'success');
+            processModal.hide();
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            Toast.show(data.message, 'error');
+        }
+    } catch (error) {
+        Toast.show('Failed to process refund request', 'error');
+    }
+}
+</script>
+{% endblock %}

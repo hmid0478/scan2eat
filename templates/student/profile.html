@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile - Scan2Eat{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 class="page-title">My Profile</h1>
+            <p class="page-subtitle">View your account details and QR code</p>
+        </div>
+        <a href="{{ url_for('student_dashboard') }}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Profile Card -->
+    <div class="col-lg-4">
+        <div class="card profile-card">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    {{ current_user.name[0]|upper }}
+                </div>
+                <h3 class="profile-name">{{ current_user.name }}</h3>
+                <span class="profile-badge">Student</span>
+            </div>
+            <div class="profile-details">
+                <div class="profile-detail-item">
+                    <div class="detail-icon">
+                        <i class="bi bi-person-badge"></i>
+                    </div>
+                    <div class="detail-content">
+                        <span class="detail-label">Roll Number</span>
+                        <span class="detail-value">{{ current_user.username }}</span>
+                    </div>
+                </div>
+                <div class="profile-detail-item">
+                    <div class="detail-icon">
+                        <i class="bi bi-door-open"></i>
+                    </div>
+                    <div class="detail-content">
+                        <span class="detail-label">Room Number</span>
+                        <span class="detail-value">{{ current_user.room_number }}</span>
+                    </div>
+                </div>
+                <div class="profile-detail-item">
+                    <div class="detail-icon success">
+                        <i class="bi bi-credit-card"></i>
+                    </div>
+                    <div class="detail-content">
+                        <span class="detail-label">Wallet Balance</span>
+                        <span class="detail-value text-success">Rs. {{ "%.2f"|format(current_user.wallet_balance) }}</span>
+                    </div>
+                </div>
+                <div class="profile-detail-item">
+                    <div class="detail-icon">
+                        <i class="bi bi-calendar"></i>
+                    </div>
+                    <div class="detail-content">
+                        <span class="detail-label">Member Since</span>
+                        <span class="detail-value">{{ current_user.created_at.strftime('%d %b %Y') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Code & Password -->
+    <div class="col-lg-8">
+        <!-- QR Code Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-primary-subtle">
+                        <i class="bi bi-qr-code text-primary"></i>
+                    </div>
+                    <h5 class="card-header-title">Your QR Code</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if current_user.qr_code_path %}
+                <div class="qr-code-container">
+                    <div class="qr-code-wrapper">
+                        <img src="{{ url_for('static', filename=current_user.qr_code_path) }}"
+                             alt="QR Code"
+                             class="qr-code-image">
+                    </div>
+                    <div class="qr-code-info">
+                        <h5>Scan to Mark Attendance</h5>
+                        <p>Show this QR code to the mess staff during meal time to mark your attendance and deduct the meal cost from your wallet.</p>
+                        <div class="qr-tips">
+                            <div class="tip-item">
+                                <i class="bi bi-check-circle text-success"></i>
+                                <span>Keep your phone brightness high</span>
+                            </div>
+                            <div class="tip-item">
+                                <i class="bi bi-check-circle text-success"></i>
+                                <span>Ensure sufficient wallet balance</span>
+                            </div>
+                            <div class="tip-item">
+                                <i class="bi bi-check-circle text-success"></i>
+                                <span>One scan per meal allowed</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-exclamation-triangle text-warning"></i>
+                    <p>QR code not available. Please contact the administrator.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Change Password Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-warning-subtle">
+                        <i class="bi bi-shield-lock text-warning"></i>
+                    </div>
+                    <h5 class="card-header-title">Change Password</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('student_change_password') }}">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label for="current_password" class="form-label">Current Password</label>
+                            <div class="input-icon-wrapper">
+                                <i class="bi bi-lock"></i>
+                                <input type="password" class="form-control" id="current_password" name="current_password" placeholder="Enter current password" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="new_password" class="form-label">New Password</label>
+                            <div class="input-icon-wrapper">
+                                <i class="bi bi-key"></i>
+                                <input type="password" class="form-control" id="new_password" name="new_password" placeholder="Enter new password" required minlength="4">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="confirm_password" class="form-label">Confirm New Password</label>
+                            <div class="input-icon-wrapper">
+                                <i class="bi bi-key-fill"></i>
+                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirm new password" required minlength="4">
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg me-2"></i>Update Password
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

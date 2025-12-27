@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: scantoeat-db
+    environment:
+      POSTGRES_DB: scantoeat
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d scantoeat"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    container_name: scantoeat-app
+    ports:
+      - "5000:5000"
+    environment:
+      SECRET_KEY: scan2eat-docker-secret-key-change-in-production
+      DATABASE_URL: postgresql://postgres:postgres123@db:5432/scantoeat
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./static/qr_codes:/app/static/qr_codes
+    command: >
+      sh -c "python init_db.py && python app.py"
+
+volumes:
+  postgres_data:

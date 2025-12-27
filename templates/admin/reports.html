@@ -1,0 +1,344 @@
+{% extends 'base.html' %}
+
+{% block title %}Reports - Scan2Eat{% endblock %}
+
+{% block extra_css %}
+<style>
+    @media print {
+        .no-print { display: none !important; }
+        .card { break-inside: avoid; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header mb-4 no-print">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 class="page-title">Reports & Analytics</h1>
+            <p class="page-subtitle">View attendance and revenue reports</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" onclick="Reports.exportToCSV()">
+                <i class="bi bi-download me-1"></i>Export CSV
+            </button>
+            <button class="btn btn-outline-secondary" onclick="Reports.printReport()">
+                <i class="bi bi-printer me-1"></i>Print
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Date Filter -->
+<div class="card mb-4 no-print">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('reports') }}" class="row g-3 align-items-end" id="filterForm">
+            <div class="col-md-3">
+                <label for="start_date" class="form-label">Start Date</label>
+                <div class="input-icon-wrapper">
+                    <i class="bi bi-calendar3"></i>
+                    <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label for="end_date" class="form-label">End Date</label>
+                <div class="input-icon-wrapper">
+                    <i class="bi bi-calendar3"></i>
+                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-filter me-2"></i>Apply Filter
+                </button>
+            </div>
+            <div class="col-md-3">
+                <div class="btn-group w-100" role="group">
+                    <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('today')">Today</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('week')">Week</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('month')">Month</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card stat-card-success">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Total Revenue</span>
+                    <h3 class="stat-value">Rs. {{ "%.0f"|format(total_revenue) }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card stat-card-info">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Total Attendance</span>
+                    <h3 class="stat-value">{{ total_attendance }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card stat-card-primary">
+            <div class="stat-card-body">
+                <div class="stat-icon">
+                    <i class="bi bi-graph-up"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-label">Avg. Per Day</span>
+                    <h3 class="stat-value">
+                        {% if attendance_data %}
+                            {{ "%.0f"|format(total_attendance / (attendance_data|length if attendance_data else 1)) }}
+                        {% else %}
+                            0
+                        {% endif %}
+                    </h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-warning-subtle">
+                        <i class="bi bi-pie-chart text-warning"></i>
+                    </div>
+                    <h5 class="card-header-title">Meal Type Distribution</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="height: 300px;">
+                    <canvas id="mealTypeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-success-subtle">
+                        <i class="bi bi-bar-chart text-success"></i>
+                    </div>
+                    <h5 class="card-header-title">Daily Revenue</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="height: 300px;">
+                    <canvas id="dailyRevenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Report Table -->
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <div class="card-header-icon bg-primary-subtle">
+                    <i class="bi bi-table text-primary"></i>
+                </div>
+                <h5 class="card-header-title">Attendance Report</h5>
+            </div>
+            {% if attendance_data %}
+            <span class="badge bg-primary">{{ attendance_data|length }} records</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card-body p-0">
+        {% if attendance_data %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Meal Type</th>
+                        <th>Attendance</th>
+                        <th>Revenue</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in attendance_data %}
+                    <tr>
+                        <td>{{ row.date.strftime('%d %b %Y') }}</td>
+                        <td>
+                            <span class="meal-type-badge {{ row.meal_type }}">
+                                <i class="bi bi-{{ 'sunrise' if row.meal_type == 'breakfast' else 'sun' if row.meal_type == 'lunch' else 'moon-stars' }} me-1"></i>
+                                {{ row.meal_type|capitalize }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="fw-bold">{{ row.count }}</span>
+                            <small class="text-muted">students</small>
+                        </td>
+                        <td class="text-success fw-bold">Rs. {{ "%.0f"|format(row.revenue or 0) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-light">
+                    <tr class="fw-bold">
+                        <td colspan="2">Total</td>
+                        <td>{{ total_attendance }} students</td>
+                        <td class="text-success">Rs. {{ "%.0f"|format(total_revenue) }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-bar-chart"></i>
+            <p>No attendance data for the selected period</p>
+            <span class="text-muted">Try selecting a different date range</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Quick date range buttons
+function setDateRange(range) {
+    const today = new Date();
+    const startInput = document.getElementById('start_date');
+    const endInput = document.getElementById('end_date');
+
+    endInput.value = today.toISOString().split('T')[0];
+
+    if (range === 'today') {
+        startInput.value = today.toISOString().split('T')[0];
+    } else if (range === 'week') {
+        const weekAgo = new Date(today);
+        weekAgo.setDate(today.getDate() - 7);
+        startInput.value = weekAgo.toISOString().split('T')[0];
+    } else if (range === 'month') {
+        const monthAgo = new Date(today);
+        monthAgo.setMonth(today.getMonth() - 1);
+        startInput.value = monthAgo.toISOString().split('T')[0];
+    }
+
+    document.getElementById('filterForm').submit();
+}
+
+// Initialize charts with data from template
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if Chart.js is available
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js is not loaded');
+        return;
+    }
+
+    // Meal Type Distribution Chart
+    const mealData = {
+        breakfast: 0,
+        lunch: 0,
+        dinner: 0
+    };
+
+    {% for row in attendance_data %}
+    mealData['{{ row.meal_type }}'] = (mealData['{{ row.meal_type }}'] || 0) + {{ row.count }};
+    {% endfor %}
+
+    const mealTypeCtx = document.getElementById('mealTypeChart');
+    if (mealTypeCtx) {
+        const totalMeals = mealData.breakfast + mealData.lunch + mealData.dinner;
+
+        if (totalMeals > 0) {
+            new Chart(mealTypeCtx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Breakfast', 'Lunch', 'Dinner'],
+                    datasets: [{
+                        data: [mealData.breakfast, mealData.lunch, mealData.dinner],
+                        backgroundColor: ['#f59e0b', '#10b981', '#6366f1'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        } else {
+            mealTypeCtx.parentElement.innerHTML = '<div class="text-center text-muted py-5"><i class="bi bi-pie-chart fs-1"></i><p class="mt-2">No data available</p></div>';
+        }
+    }
+
+    // Daily Revenue Chart
+    const dailyData = {};
+    {% for row in attendance_data %}
+    (function() {
+        const dateKey = '{{ row.date.strftime("%d %b") }}';
+        if (!dailyData[dateKey]) dailyData[dateKey] = 0;
+        dailyData[dateKey] += {{ row.revenue or 0 }};
+    })();
+    {% endfor %}
+
+    const labels = Object.keys(dailyData).reverse();
+    const values = Object.values(dailyData).reverse();
+
+    const dailyRevenueCtx = document.getElementById('dailyRevenueChart');
+    if (dailyRevenueCtx) {
+        if (labels.length > 0) {
+            new Chart(dailyRevenueCtx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Revenue (Rs.)',
+                        data: values,
+                        backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) { return 'Rs. ' + value; }
+                            }
+                        }
+                    }
+                }
+            });
+        } else {
+            dailyRevenueCtx.parentElement.innerHTML = '<div class="text-center text-muted py-5"><i class="bi bi-bar-chart fs-1"></i><p class="mt-2">No data available</p></div>';
+        }
+    }
+});
+</script>
+{% endblock %}

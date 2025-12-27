@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block title %}Settings - Scan2Eat{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 class="page-title">Settings</h1>
+            <p class="page-subtitle">Manage your account settings</p>
+        </div>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Change Password Card -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-warning-subtle">
+                        <i class="bi bi-shield-lock text-warning"></i>
+                    </div>
+                    <h5 class="card-header-title">Change Password</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin_change_password') }}">
+                    <div class="mb-3">
+                        <label for="current_password" class="form-label">Current Password</label>
+                        <div class="input-icon-wrapper">
+                            <i class="bi bi-lock"></i>
+                            <input type="password" class="form-control" id="current_password" name="current_password" required placeholder="Enter current password">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label">New Password</label>
+                        <div class="input-icon-wrapper">
+                            <i class="bi bi-key"></i>
+                            <input type="password" class="form-control" id="new_password" name="new_password" required minlength="4" placeholder="Enter new password">
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label for="confirm_password" class="form-label">Confirm New Password</label>
+                        <div class="input-icon-wrapper">
+                            <i class="bi bi-key-fill"></i>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required minlength="4" placeholder="Confirm new password">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-check-lg me-2"></i>Update Password
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Info Card -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-primary-subtle">
+                        <i class="bi bi-person-circle text-primary"></i>
+                    </div>
+                    <h5 class="card-header-title">Account Information</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="admin-profile-card">
+                    <div class="admin-avatar">
+                        {{ current_user.name[0]|upper }}
+                    </div>
+                    <div class="admin-profile-info">
+                        <h4 class="admin-name">{{ current_user.name }}</h4>
+                        <span class="admin-role">Administrator</span>
+                    </div>
+                </div>
+                <div class="info-list mt-4">
+                    <div class="info-item">
+                        <span class="info-label">Username</span>
+                        <span class="info-value">{{ current_user.username }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Role</span>
+                        <span class="info-value">
+                            <span class="status-pill active">Admin</span>
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Account Created</span>
+                        <span class="info-value">{{ current_user.created_at.strftime('%d %b %Y') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Links Card -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="card-header-icon bg-info-subtle">
+                        <i class="bi bi-lightning-charge text-info"></i>
+                    </div>
+                    <h5 class="card-header-title">Quick Links</h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('list_students') }}" class="btn btn-outline-primary text-start">
+                        <i class="bi bi-people me-2"></i>Manage Students
+                    </a>
+                    <a href="{{ url_for('manage_meals') }}" class="btn btn-outline-primary text-start">
+                        <i class="bi bi-cup-hot me-2"></i>Manage Meals
+                    </a>
+                    <a href="{{ url_for('reports') }}" class="btn btn-outline-primary text-start">
+                        <i class="bi bi-bar-chart me-2"></i>View Reports
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}Available Meals - Scan2Eat{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 class="page-title">Available Meals</h1>
+            <p class="page-subtitle">View upcoming meals and their prices</p>
+        </div>
+        <a href="{{ url_for('student_profile') }}" class="btn btn-primary">
+            <i class="bi bi-qr-code me-2"></i>Show My QR
+        </a>
+    </div>
+</div>
+
+<!-- Today's Meals Highlight -->
+{% set today_meals = meals|selectattr('date', 'equalto', today)|list %}
+{% if today_meals %}
+<div class="today-meals-section mb-4">
+    <div class="section-header mb-3">
+        <h5 class="section-title">
+            <i class="bi bi-calendar-event me-2"></i>Today's Meals
+        </h5>
+        <span class="badge bg-primary">{{ today_meals|length }} meal{{ 's' if today_meals|length > 1 else '' }}</span>
+    </div>
+    <div class="row g-3">
+        {% for meal in today_meals %}
+        <div class="col-md-4">
+            <div class="today-meal-card {{ meal.meal_type }}">
+                <div class="today-meal-header">
+                    <div class="today-meal-icon">
+                        <i class="bi bi-{{ 'sunrise' if meal.meal_type == 'breakfast' else 'sun' if meal.meal_type == 'lunch' else 'moon-stars' }}"></i>
+                    </div>
+                    <div class="today-meal-type">{{ meal.meal_type|capitalize }}</div>
+                    <div class="today-meal-price">Rs. {{ "%.0f"|format(meal.price) }}</div>
+                </div>
+                {% if meal.menu_items %}
+                <div class="today-meal-menu">
+                    {{ meal.menu_items[:80] }}{{ '...' if meal.menu_items|length > 80 else '' }}
+                </div>
+                {% endif %}
+                <div class="today-meal-status">
+                    {% if meal.is_active %}
+                    <span class="status-badge active">
+                        <i class="bi bi-check-circle me-1"></i>Active
+                    </span>
+                    {% else %}
+                    <span class="status-badge inactive">
+                        <i class="bi bi-x-circle me-1"></i>Closed
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- All Meals List -->
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <div class="card-header-icon bg-warning-subtle">
+                    <i class="bi bi-cup-hot text-warning"></i>
+                </div>
+                <h5 class="card-header-title">Upcoming Meals</h5>
+            </div>
+            {% if meals %}
+            <span class="badge bg-primary">{{ meals|length }} meals</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card-body p-0">
+        {% if meals %}
+        <div class="meals-list">
+            {% for meal in meals %}
+            <div class="meal-list-item {{ 'today' if meal.date == today else '' }}">
+                <div class="meal-list-icon {{ meal.meal_type }}">
+                    <i class="bi bi-{{ 'sunrise' if meal.meal_type == 'breakfast' else 'sun' if meal.meal_type == 'lunch' else 'moon-stars' }}"></i>
+                </div>
+                <div class="meal-list-details">
+                    <div class="meal-list-main">
+                        <div class="meal-list-info">
+                            <span class="meal-list-type">{{ meal.meal_type|capitalize }}</span>
+                            <span class="meal-list-date">
+                                {{ meal.date.strftime('%A, %d %b %Y') }}
+                                {% if meal.date == today %}
+                                <span class="today-badge">Today</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="meal-list-price">
+                            Rs. {{ "%.0f"|format(meal.price) }}
+                        </div>
+                    </div>
+                    {% if meal.menu_items %}
+                    <div class="meal-list-menu">
+                        <i class="bi bi-card-list me-1"></i>
+                        {{ meal.menu_items[:60] }}{{ '...' if meal.menu_items|length > 60 else '' }}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="meal-list-status">
+                    {% if meal.is_active %}
+                    <span class="badge bg-success">Active</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Closed</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-cup-hot"></i>
+            <p>No upcoming meals scheduled</p>
+            <span class="text-muted">Check back later for the meal schedule</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- How It Works Card -->
+<div class="how-it-works-card mt-4">
+    <div class="how-it-works-header">
+        <i class="bi bi-lightbulb"></i>
+        <h5>How It Works</h5>
+    </div>
+    <div class="how-it-works-steps">
+        <div class="step-item">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <span class="step-title">Go to Mess</span>
+                <span class="step-desc">Visit the mess during meal time</span>
+            </div>
+        </div>
+        <div class="step-divider"></div>
+        <div class="step-item">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <span class="step-title">Show QR Code</span>
+                <span class="step-desc">Display your QR to the staff</span>
+            </div>
+        </div>
+        <div class="step-divider"></div>
+        <div class="step-item">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <span class="step-title">Auto Deduct</span>
+                <span class="step-desc">Amount deducted from wallet</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
